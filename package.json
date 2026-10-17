@@ -1,0 +1,45 @@
+{
+  "name": "soundbase-plugin-shure-ad4q",
+  "version": "0.1.0",
+  "description": "SoundBase plugin: Shure Axient Digital AD4Q receiver.",
+  "author": {
+    "name": "Matt Bell",
+    "email": "matt@mbsound.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbsound/soundbase-plugin-shure-ad4q.git"
+  },
+  "homepage": "https://github.com/mbsound/soundbase-plugin-shure-ad4q#readme",
+  "bugs": {
+    "url": "https://github.com/mbsound/soundbase-plugin-shure-ad4q/issues"
+  },
+  "license": "BUSL-1.1",
+  "type": "module",
+  "main": "main.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "test": "node --test __tests__/*.test.js",
+    "doctor": "node scripts/doctor.mjs",
+    "manifest": "node scripts/validate-manifest.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "rename": "node scripts/rename.mjs",
+    "bump": "node scripts/bump-version.mjs",
+    "pack:release": "node scripts/pack-release.mjs",
+    "ad4q": "node scripts/ad4q.mjs"
+  },
+  "dependencies": {
+    "@soundbase/plugin-contract": "^0.12.2",
+    "@soundbase/plugin-shell": "^0.12.2"
+  },
+  "soundbase": {
+    "template": {
+      "name": "soundbase-plugin-template",
+      "version": "1.0.15"
+    },
+    "generatedFrom": "7f3cd7f23533d5c769f70e8d17eb91dcc4a43a07"
+  }
+}

@@ -1,0 +1,402 @@
+{
+  "manifestVersion": 1,
+  "id": "shure-ad4q",
+  "name": "Shure AD4Q",
+  "version": "0.1.0",
+  "license": "BUSL-1.1",
+  "platforms": [
+    "darwin-arm64",
+    "darwin-x64"
+  ],
+  "repository": "https://github.com/mbsound/soundbase-plugin-shure-ad4q",
+  "maintainers": [
+    {
+      "name": "Matt Bell",
+      "email": "matt@mbsound.org"
+    }
+  ],
+  "contract": {
+    "core": "1.4",
+    "modules": {
+      "ChannelMonitoring": "1.1",
+      "PropertyControl": "1.0"
+    }
+  },
+  "runtime": {
+    "type": "node",
+    "entrypoint": "main.js"
+  },
+  "deployment": [
+    "managed"
+  ],
+  "template": {
+    "name": "soundbase-plugin-template",
+    "version": "1.0.15"
+  },
+  "products": [
+    {
+      "deviceTypeId": "plugin:shure-ad4q/ad4q",
+      "manufacturer": {
+        "id": "shure",
+        "name": "Shure"
+      },
+      "model": {
+        "id": "ad4q",
+        "name": "AD4Q",
+        "displayName": "Shure AD4Q"
+      },
+      "family": {
+        "id": "axient-digital",
+        "name": "Axient Digital"
+      },
+      "capabilities": {
+        "meters": true,
+        "name": true,
+        "frequency": true,
+        "mute": true,
+        "gain": true,
+        "battery": true
+      },
+      "traits": {
+        "isReceiver": true,
+        "isRackDevice": true,
+        "channelCount": 4
+      },
+      "channelName": {
+        "maxLength": 8,
+        "uppercase": false,
+        "allowsSpaces": true,
+        "allowedChars": "^[\\x20-\\x7E]*$"
+      },
+      "layout": {
+        "meterStyle": "led",
+        "channel": [
+          {
+            "type": "meter",
+            "bind": "meters.rf1",
+            "metric": "RF_LEVEL",
+            "label": "RF"
+          },
+          {
+            "type": "value",
+            "bind": "gain",
+            "label": "Gain",
+            "unit": "dB",
+            "format": "integer"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.toneLevel",
+            "label": "Tone",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.diversity",
+            "label": "Diversity",
+            "format": "text"
+          },
+          {
+            "type": "indicator",
+            "bind": "mute",
+            "label": "Mute",
+            "tone": "warning"
+          },
+          {
+            "type": "value",
+            "bind": "frequency",
+            "format": "frequency",
+            "unit": "MHz"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.toneActive",
+            "label": "Tone on",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.overloadHold",
+            "label": "Overload hold",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.toneFreq",
+            "label": "Tone Hz",
+            "unit": "Hz",
+            "format": "integer",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.interferenceAvoidance",
+            "label": "Interference avoidance",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unregisteredTx",
+            "label": "Unregistered TX",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.rfPower",
+            "label": "IR preset RF power",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.encryption",
+            "label": "Encryption",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "battery",
+            "bind": "battery"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.model",
+            "label": "Transmitter",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.lastSync.model",
+            "label": "Last synced",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "control",
+            "propertyId": "mute"
+          },
+          {
+            "type": "control",
+            "propertyId": "gain"
+          },
+          {
+            "type": "control",
+            "propertyId": "toneLevel"
+          },
+          {
+            "type": "control",
+            "propertyId": "toneFrequency"
+          },
+          {
+            "type": "control",
+            "propertyId": "diversity"
+          },
+          {
+            "type": "control",
+            "propertyId": "overloadHold"
+          },
+          {
+            "type": "control",
+            "propertyId": "interferenceAvoidance"
+          },
+          {
+            "type": "control",
+            "propertyId": "unregisteredTx"
+          },
+          {
+            "type": "control",
+            "propertyId": "rfPower"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkXlrNormal"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkTrsNormal"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkAes3Normal"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkDanteNormal"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkXlrPressed"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkTrsPressed"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkAes3Pressed"
+          },
+          {
+            "type": "control",
+            "propertyId": "talkDantePressed"
+          },
+          {
+            "type": "control",
+            "propertyId": "unlinkTransmitter"
+          }
+        ],
+        "device": [
+          {
+            "type": "value",
+            "bind": "deviceName",
+            "label": "Unit"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.band",
+            "label": "Band",
+            "format": "text"
+          },
+          {
+            "type": "indicator",
+            "bind": "connection.connected",
+            "label": "Link",
+            "tone": "success"
+          }
+        ]
+      }
+    }
+  ],
+  "deviceConfigFields": [
+    {
+      "id": "host",
+      "type": "textinput",
+      "label": "IP address",
+      "required": true,
+      "manualOnly": true,
+      "help": "The AD4Q's address on the control network, as shown on its front panel or in Wireless Workbench. Its identity is discovered from the unit itself."
+    },
+    {
+      "id": "cid",
+      "type": "textinput",
+      "label": "Component ID",
+      "help": "Normally left empty: the AD4Q announces its own. Fill it in only if this unit is never found by itself, with the 32 hexadecimal digits of its ACN component ID."
+    }
+  ],
+  "pluginConfigFields": [
+    {
+      "id": "discoveryNote",
+      "type": "static-text",
+      "label": "AD4Q units on this computer's network are found automatically. For units on another subnet, list their addresses below or add them by IP address."
+    },
+    {
+      "id": "addresses",
+      "type": "textinput",
+      "label": "Additional AD4Q addresses",
+      "default": "",
+      "help": "Comma-separated IP addresses to ask directly, for units that multicast does not reach."
+    },
+    {
+      "id": "refreshIntervalMs",
+      "type": "number",
+      "label": "Refresh interval",
+      "unit": "ms",
+      "default": 5000,
+      "min": 1000,
+      "max": 60000,
+      "step": 500,
+      "help": "How often every setting is re-read from the unit. Changes the unit pushes itself arrive at once regardless."
+    },
+    {
+      "id": "simulate",
+      "type": "checkbox",
+      "label": "Simulate an AD4Q",
+      "default": false,
+      "help": "Adds a simulated four-channel unit on this computer, for trying the workflow with no hardware. It never talks to a real device."
+    }
+  ],
+  "stateKeys": [
+    "deviceName",
+    "connection",
+    "channelName",
+    "frequency",
+    "mute",
+    "gain",
+    "meters",
+    "battery",
+    {
+      "key": "x.shure-ad4q.toneLevel",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.toneFreq",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.toneActive",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.diversity",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.overloadHold",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.interferenceAvoidance",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.unregisteredTx",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.rfPower",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.encryption",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.talk",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.transmitter",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.lastSync",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.unlink",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.unit",
+      "scope": "device",
+      "op": "replace"
+    }
+  ]
+}

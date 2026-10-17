@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Plugin contract or SoundBase behaviour
+    url: https://lab.soundbase.app
+    about: >-
+      Questions about the plugin contract, getting a plugin listed, or how
+      SoundBase itself behaves belong in the Lab. Problems with this plugin and
+      the AD4Q belong here.
