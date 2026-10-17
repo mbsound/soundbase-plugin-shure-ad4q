@@ -157,4 +157,9 @@ of their owner, used here only to say what the plugin works with.
 
 ## License
 
-Business Source License 1.1. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
+
+The SoundBase SDK this plugin runs on (`@soundbase/plugin-contract` and
+`@soundbase/plugin-shell`) is a separate work under its own licence, the Business
+Source License 1.1, which permits building and distributing plugins for SoundBase.
+It is installed as a dependency and is not part of this repository.

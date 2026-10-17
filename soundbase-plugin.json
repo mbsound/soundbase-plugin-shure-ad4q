@@ -3,7 +3,7 @@
   "id": "shure-ad4q",
   "name": "Shure AD4Q",
   "version": "0.1.0",
-  "license": "BUSL-1.1",
+  "license": "MIT",
   "platforms": [
     "darwin-arm64",
     "darwin-x64"

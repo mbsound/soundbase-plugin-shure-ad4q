@@ -136,16 +136,15 @@ commercial. You may sell it.
 **The SDK you build on** — `@soundbase/plugin-contract`,
 `@soundbase/plugin-shell`, this template — is under the **Business Source
 License 1.1**: source available, not open source. Read the Additional Use
-Grant in [`LICENSE`](../LICENSE). In short: it permits developing,
+Grant in `node_modules/@soundbase/plugin-contract/LICENSE`. In short: it permits developing,
 distributing and operating plugins for SoundBase, **including commercially**;
 it does not permit using this code with anything that is not SoundBase. Each
 version converts to the Change License named in `LICENSE` on its Change Date.
 
-> The `LICENSE` in this repository is the finalised SDK licence: Business
-> Source License 1.1, Licensor Show Code, Corp., converting to the Apache
-> License 2.0 on September 5, 2030. It covers the template code you started
-> from. If your plugin ships under a licence of its own, replace the file and
-> set `license` in the manifest to match; `npm run doctor` checks that a
+> The `LICENSE` in this repository is MIT, covering the plugin's own code; the
+> SDK keeps its own licence (Business Source License 1.1, Licensor Show Code,
+> Corp., converting to the Apache License 2.0 on September 5, 2030). `license`
+> in the manifest names the plugin's licence, and `npm run doctor` checks that a
 > `LICENSE` is present and that the manifest names one.
 
 The Lab refuses a release with no `LICENSE` file or no `license` in the
