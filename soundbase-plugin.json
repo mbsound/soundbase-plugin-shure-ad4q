@@ -19,7 +19,8 @@
     "core": "1.4",
     "modules": {
       "ChannelMonitoring": "1.1",
-      "PropertyControl": "1.0"
+      "PropertyControl": "1.0",
+      "SpectrumAnalyzer": "1.2"
     }
   },
   "runtime": {
@@ -55,7 +56,9 @@
         "frequency": true,
         "mute": true,
         "gain": true,
-        "battery": true
+        "battery": true,
+        "spectrumAnalyzer": true,
+        "identify": true
       },
       "traits": {
         "isReceiver": true,
@@ -75,26 +78,46 @@
             "type": "meter",
             "bind": "meters.rf1",
             "metric": "RF_LEVEL",
-            "label": "RF"
+            "label": "RF A"
+          },
+          {
+            "type": "meter",
+            "bind": "meters.rf2",
+            "metric": "RF_LEVEL",
+            "label": "RF B"
+          },
+          {
+            "type": "meter",
+            "bind": "meters.af",
+            "metric": "AUDIO_LEVEL",
+            "label": "Audio"
           },
           {
             "type": "value",
-            "bind": "gain",
-            "label": "Gain",
-            "unit": "dB",
-            "format": "integer"
+            "bind": "x.shure-ad4q.transmitter.model",
+            "label": "Transmitter",
+            "format": "text",
+            "region": "cells"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.status.interference",
+            "label": "Interference",
+            "tone": "warning",
+            "on": "DETECTED",
+            "region": "cells"
           },
           {
             "type": "value",
-            "bind": "x.shure-ad4q.toneLevel",
-            "label": "Tone",
+            "bind": "x.shure-ad4q.frequencyDiversity",
+            "label": "Frequency Diversity",
             "format": "text"
           },
           {
-            "type": "value",
-            "bind": "x.shure-ad4q.diversity",
-            "label": "Diversity",
-            "format": "text"
+            "type": "text",
+            "text": "Selection: two AD transmitters, one per frequency. Combining: one ADX2FD dual-frequency transmitter. Switching to Combining unlinks every paired transmitter.",
+            "tone": "info",
+            "region": "detail"
           },
           {
             "type": "indicator",
@@ -164,15 +187,68 @@
           },
           {
             "type": "value",
-            "bind": "x.shure-ad4q.transmitter.model",
-            "label": "Transmitter",
+            "bind": "x.shure-ad4q.lastSync.model",
+            "label": "Last synced",
             "format": "text",
             "region": "detail"
           },
           {
             "type": "value",
-            "bind": "x.shure-ad4q.lastSync.model",
-            "label": "Last synced",
+            "bind": "x.shure-ad4q.transmitter.deviceId",
+            "label": "Transmitter name",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.powerMw",
+            "label": "Transmitter power",
+            "unit": "mW",
+            "format": "integer",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.muteMode",
+            "label": "Transmitter audio",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.transmitter.talkSwitch",
+            "label": "Talk switch pressed",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.status.unregisteredTx",
+            "label": "Unregistered transmitter",
+            "tone": "warning",
+            "on": "ERROR",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.status.encryption",
+            "label": "Encryption mismatch",
+            "tone": "warning",
+            "on": "ERROR",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "gain",
+            "label": "Gain",
+            "unit": "dB",
+            "format": "integer",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.toneLevel",
+            "label": "Tone",
             "format": "text",
             "region": "detail"
           },
@@ -194,7 +270,25 @@
           },
           {
             "type": "control",
-            "propertyId": "diversity"
+            "propertyId": "toneGenerator",
+            "label": "Tone generator −30 dB"
+          },
+          {
+            "type": "group",
+            "label": "Frequency Diversity",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "frequencyDiversity",
+                "label": "Frequency Diversity"
+              },
+              {
+                "type": "text",
+                "text": "Selection: two AD transmitters, one per frequency. Combining: one ADX2FD dual-frequency transmitter. Switching to Combining unlinks every paired transmitter.",
+                "tone": "info"
+              }
+            ]
           },
           {
             "type": "control",
@@ -206,43 +300,72 @@
           },
           {
             "type": "control",
-            "propertyId": "unregisteredTx"
+            "propertyId": "unregisteredTransmitter"
           },
           {
             "type": "control",
-            "propertyId": "rfPower"
+            "propertyId": "transmitterPower"
           },
           {
-            "type": "control",
-            "propertyId": "talkXlrNormal"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkTrsNormal"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkAes3Normal"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkDanteNormal"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkXlrPressed"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkTrsPressed"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkAes3Pressed"
-          },
-          {
-            "type": "control",
-            "propertyId": "talkDantePressed"
+            "type": "group",
+            "label": "Talk switch: output routing",
+            "direction": "column",
+            "children": [
+              {
+                "type": "group",
+                "label": "Normal",
+                "direction": "row",
+                "children": [
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalXlr",
+                    "label": "XLR"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalTrs",
+                    "label": "TRS"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalAes3",
+                    "label": "AES3"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalDante",
+                    "label": "Dante"
+                  }
+                ]
+              },
+              {
+                "type": "group",
+                "label": "Pressed",
+                "direction": "row",
+                "children": [
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedXlr",
+                    "label": "XLR"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedTrs",
+                    "label": "TRS"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedAes3",
+                    "label": "AES3"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedDante",
+                    "label": "Dante"
+                  }
+                ]
+              }
+            ]
           },
           {
             "type": "control",
@@ -266,25 +389,401 @@
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
+          },
+          {
+            "type": "group",
+            "label": "HD mode",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "highDensityMode",
+                "label": "HD mode"
+              },
+              {
+                "type": "text",
+                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
+                "tone": "warning"
+              }
+            ]
           }
         ]
       }
-    }
-  ],
-  "deviceConfigFields": [
-    {
-      "id": "host",
-      "type": "textinput",
-      "label": "IP address",
-      "required": true,
-      "manualOnly": true,
-      "help": "The AD4Q's address on the control network, as shown on its front panel or in Wireless Workbench. Its identity is discovered from the unit itself."
     },
     {
-      "id": "cid",
-      "type": "textinput",
-      "label": "Component ID",
-      "help": "Normally left empty: the AD4Q announces its own. Fill it in only if this unit is never found by itself, with the 32 hexadecimal digits of its ACN component ID."
+      "deviceTypeId": "plugin:shure-ad4q/ad4d",
+      "manufacturer": {
+        "id": "shure",
+        "name": "Shure"
+      },
+      "model": {
+        "id": "ad4d",
+        "name": "AD4D",
+        "displayName": "Shure AD4D"
+      },
+      "family": {
+        "id": "axient-digital",
+        "name": "Axient Digital"
+      },
+      "capabilities": {
+        "meters": true,
+        "name": true,
+        "frequency": true,
+        "mute": true,
+        "gain": true,
+        "battery": true,
+        "spectrumAnalyzer": true,
+        "identify": true
+      },
+      "traits": {
+        "isReceiver": true,
+        "isRackDevice": true,
+        "channelCount": 2
+      },
+      "channelName": {
+        "maxLength": 8,
+        "uppercase": false,
+        "allowsSpaces": true,
+        "allowedChars": "^[\\x20-\\x7E]*$"
+      },
+      "layout": {
+        "meterStyle": "led",
+        "channel": [
+          {
+            "type": "meter",
+            "bind": "meters.rf1",
+            "metric": "RF_LEVEL",
+            "label": "RF A"
+          },
+          {
+            "type": "meter",
+            "bind": "meters.rf2",
+            "metric": "RF_LEVEL",
+            "label": "RF B"
+          },
+          {
+            "type": "meter",
+            "bind": "meters.af",
+            "metric": "AUDIO_LEVEL",
+            "label": "Audio"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.model",
+            "label": "Transmitter",
+            "format": "text",
+            "region": "cells"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.status.interference",
+            "label": "Interference",
+            "tone": "warning",
+            "on": "DETECTED",
+            "region": "cells"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.frequencyDiversity",
+            "label": "Frequency Diversity",
+            "format": "text"
+          },
+          {
+            "type": "text",
+            "text": "Selection: two AD transmitters, one per frequency. Combining: one ADX2FD dual-frequency transmitter. Switching to Combining unlinks every paired transmitter.",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "mute",
+            "label": "Mute",
+            "tone": "warning"
+          },
+          {
+            "type": "value",
+            "bind": "frequency",
+            "format": "frequency",
+            "unit": "MHz"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.toneActive",
+            "label": "Tone on",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.overloadHold",
+            "label": "Overload hold",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.toneFreq",
+            "label": "Tone Hz",
+            "unit": "Hz",
+            "format": "integer",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.interferenceAvoidance",
+            "label": "Interference avoidance",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unregisteredTx",
+            "label": "Unregistered TX",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.rfPower",
+            "label": "IR preset RF power",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.encryption",
+            "label": "Encryption",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "battery",
+            "bind": "battery"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.lastSync.model",
+            "label": "Last synced",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.deviceId",
+            "label": "Transmitter name",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.powerMw",
+            "label": "Transmitter power",
+            "unit": "mW",
+            "format": "integer",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.transmitter.muteMode",
+            "label": "Transmitter audio",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.transmitter.talkSwitch",
+            "label": "Talk switch pressed",
+            "tone": "info",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.status.unregisteredTx",
+            "label": "Unregistered transmitter",
+            "tone": "warning",
+            "on": "ERROR",
+            "region": "detail"
+          },
+          {
+            "type": "indicator",
+            "bind": "x.shure-ad4q.status.encryption",
+            "label": "Encryption mismatch",
+            "tone": "warning",
+            "on": "ERROR",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "gain",
+            "label": "Gain",
+            "unit": "dB",
+            "format": "integer",
+            "region": "detail"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.toneLevel",
+            "label": "Tone",
+            "format": "text",
+            "region": "detail"
+          },
+          {
+            "type": "control",
+            "propertyId": "mute"
+          },
+          {
+            "type": "control",
+            "propertyId": "gain"
+          },
+          {
+            "type": "control",
+            "propertyId": "toneLevel"
+          },
+          {
+            "type": "control",
+            "propertyId": "toneFrequency"
+          },
+          {
+            "type": "control",
+            "propertyId": "toneGenerator",
+            "label": "Tone generator −30 dB"
+          },
+          {
+            "type": "group",
+            "label": "Frequency Diversity",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "frequencyDiversity",
+                "label": "Frequency Diversity"
+              },
+              {
+                "type": "text",
+                "text": "Selection: two AD transmitters, one per frequency. Combining: one ADX2FD dual-frequency transmitter. Switching to Combining unlinks every paired transmitter.",
+                "tone": "info"
+              }
+            ]
+          },
+          {
+            "type": "control",
+            "propertyId": "overloadHold"
+          },
+          {
+            "type": "control",
+            "propertyId": "interferenceAvoidance"
+          },
+          {
+            "type": "control",
+            "propertyId": "unregisteredTransmitter"
+          },
+          {
+            "type": "control",
+            "propertyId": "transmitterPower"
+          },
+          {
+            "type": "group",
+            "label": "Talk switch: output routing",
+            "direction": "column",
+            "children": [
+              {
+                "type": "group",
+                "label": "Normal",
+                "direction": "row",
+                "children": [
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalXlr",
+                    "label": "XLR"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalTrs",
+                    "label": "TRS"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalAes3",
+                    "label": "AES3"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkNormalDante",
+                    "label": "Dante"
+                  }
+                ]
+              },
+              {
+                "type": "group",
+                "label": "Pressed",
+                "direction": "row",
+                "children": [
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedXlr",
+                    "label": "XLR"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedTrs",
+                    "label": "TRS"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedAes3",
+                    "label": "AES3"
+                  },
+                  {
+                    "type": "control",
+                    "propertyId": "talkPressedDante",
+                    "label": "Dante"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "control",
+            "propertyId": "unlinkTransmitter"
+          }
+        ],
+        "device": [
+          {
+            "type": "value",
+            "bind": "deviceName",
+            "label": "Unit"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.band",
+            "label": "Band",
+            "format": "text"
+          },
+          {
+            "type": "indicator",
+            "bind": "connection.connected",
+            "label": "Link",
+            "tone": "success"
+          },
+          {
+            "type": "group",
+            "label": "HD mode",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "highDensityMode",
+                "label": "HD mode"
+              },
+              {
+                "type": "text",
+                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
+                "tone": "warning"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "pluginConfigFields": [
@@ -310,6 +809,13 @@
       "max": 60000,
       "step": 500,
       "help": "How often every setting is re-read from the unit. Changes the unit pushes itself arrive at once regardless."
+    },
+    {
+      "id": "quickToggles",
+      "type": "checkbox",
+      "label": "Quick toggles",
+      "default": true,
+      "help": "One-step switches beside the channel settings: Tone generator on (-30 dB) / off. Turn off to hide them."
     },
     {
       "id": "simulate",
@@ -344,7 +850,7 @@
       "op": "merge"
     },
     {
-      "key": "x.shure-ad4q.diversity",
+      "key": "x.shure-ad4q.frequencyDiversity",
       "scope": "channel",
       "op": "merge"
     },
@@ -397,6 +903,21 @@
       "key": "x.shure-ad4q.unit",
       "scope": "device",
       "op": "replace"
+    },
+    {
+      "key": "x.shure-ad4q.toneGen",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.showLink",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.status",
+      "scope": "channel",
+      "op": "merge"
     }
   ]
 }
