@@ -3,7 +3,7 @@
 // accepts and one it silently ignores look the same until you look.
 
 import { EventEmitter } from 'node:events';
-import { DMP, dmpBatch, dmpPdu } from '../acn/pdu.js';
+import { DMP, dmpBatch, dmpPdu, strBatch } from '../acn/pdu.js';
 import { AcnSession } from '../acn/session.js';
 import { localInterfaceFor } from '../netutil.js';
 import { DEFAULT_DEVICE_PORT } from '../acn/slp.js';
@@ -13,9 +13,10 @@ import {
   CH,
   DEV,
   DEVICE_PROPS,
-  LEVEL_PROP,
+  METER_PROPS,
   TONE_OFF_DB,
   chanAddr,
+  channelsFor,
   decodeProp,
   diversityRaw,
   encodeBool,
@@ -26,12 +27,24 @@ import {
   iaIndex,
   decodeTalk,
   mhzToKhz,
+  modelOf,
   rfPowerRaw,
   rosterAddrs,
   rosterIdAddr,
   unregisteredIndex,
   withTalkOutput,
 } from './properties.js';
+import {
+  ANTENNAS,
+  SCAN_OBJ,
+  SCAN_LIMITS,
+  SCAN_STATUS,
+  configEntries,
+  dataKey,
+  parseDataEvent,
+  scanDurationMs,
+  statusKeys,
+} from './scan.js';
 
 const REQUEST_TIMEOUT_MS = 3000;
 const BATCH = 8;
@@ -54,6 +67,8 @@ const WRITES = Object.freeze({
   interferenceAvoidance: { obj: CH.INTERFERENCE_AVOIDANCE, encode: (v) => encodeU8(iaIndex(v)) },
   unregisteredTx: { obj: CH.UNREGISTERED_TX, encode: (v) => encodeU8(unregisteredIndex(v)) },
   rfPower: { obj: CH.RF_POWER, encode: (v) => encodeU8(rfPowerRaw(v)) },
+  // 0x03 is on, 0x00 off; the transmitters need an IR sync afterwards for the new key
+  encryption: { obj: CH.ENCRYPTION, encode: (v) => encodeU8(v ? 0x03 : 0x00) },
 });
 
 const DEVICE_WRITES = Object.freeze({
@@ -61,6 +76,11 @@ const DEVICE_WRITES = Object.freeze({
   fanAlwaysOn: { addr: DEV.FAN_ALWAYS_ON, encode: (v) => encodeBool(v) },
   powerLock: { addr: DEV.POWER_LOCK, encode: (v) => encodeBool(v) },
   panelLock: { addr: DEV.PANEL_LOCK, encode: (v) => encodeBool(v) },
+  // accepted and read back at once; the unit then restarts itself about 18 s later
+  hdMode: { addr: DEV.HD_MODE, encode: (v) => encodeBool(v) },
+  // a plain string; applies live, and the channels retune to the new band
+  band: { addr: DEV.BAND, encode: (v) => encodeString(v) },
+  antennaBias: { addr: DEV.ANTENNA_BIAS, encode: (v) => encodeBool(v) },
 });
 
 export class WriteRefused extends Error {
@@ -68,6 +88,28 @@ export class WriteRefused extends Error {
     super(`the unit refused the write to 0x${addr.toString(16)} (reason ${reason})`);
     this.addr = addr;
     this.reason = reason;
+  }
+}
+
+/** A scan stopped because the caller asked it to. */
+export class ScanAborted extends Error {
+  constructor() {
+    super('the scan was stopped');
+  }
+}
+
+/** A scan that did not come back as planned: the unit sent something other than what was asked for. */
+export class ScanFailed extends Error {}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Poll `done` until it holds; throws on timeout or if `signal` aborts. */
+async function waitFor(done, timeoutMs, { signal, what }) {
+  const deadline = Date.now() + timeoutMs;
+  while (!done()) {
+    if (signal?.aborted) throw new ScanAborted();
+    if (Date.now() > deadline) throw new ScanFailed(`the unit did not ${what} in time`);
+    await delay(25);
   }
 }
 
@@ -89,9 +131,15 @@ export class Ad4qDevice extends EventEmitter {
     advert = true,
     timings,
     requestTimeoutMs = REQUEST_TIMEOUT_MS,
+    channels = null,
+    controllerCid = null,
     log = () => {},
   }) {
     super();
+    // an AD4D has two channels; asking it for four leaves reads that are never answered
+    this.channels = channels ?? CHANNEL_COUNT;
+    this.channelsGiven = channels != null;
+    this.controllerCid = controllerCid;
     this.host = host;
     this.port = port;
     this.cid = cid;
@@ -118,6 +166,8 @@ export class Ad4qDevice extends EventEmitter {
       if (!unit) throw new Error(`no AD4Q is advertising at ${this.host}`);
       this.cid = unit.cid;
       this.port = unit.port;
+      // the advert says which receiver this is, unless the caller already did
+      if (!this.channelsGiven) this.channels = channelsFor(modelOf(unit.fctn));
     }
     const localIp = this.localIp ?? localInterfaceFor(this.host)?.address;
     if (!localIp) throw new Error('this computer has no network interface that can reach the unit');
@@ -127,6 +177,7 @@ export class Ad4qDevice extends EventEmitter {
       deviceCid: Buffer.from(this.cid, 'hex'),
       localIp,
       advert: this.advert,
+      cid: this.controllerCid,
       timings: this.timings,
       log: this.log,
     });
@@ -144,8 +195,22 @@ export class Ad4qDevice extends EventEmitter {
 
   // --- inbound -------------------------------------------------------------------
 
-  #onDmp({ vector, addr, value }) {
+  #onDmp({ vector, addr, key, value }) {
+    if (process.env.AD4Q_DEBUG === '1') {
+      const at = key !== undefined ? JSON.stringify(key) : addr === null ? 'none' : `0x${addr.toString(16)}`;
+      this.log('debug', `DMP vector=0x${vector.toString(16)} addr=${at} value=${value.toString('hex').slice(0, 80)}`);
+    }
     this.timeouts = 0;
+    if (key !== undefined) {
+      // a string-keyed property: the RF scan's status and samples
+      this.emit('string', { vector, key, value });
+      return;
+    }
+    if (addr === null) {
+      // no address to match: the unit's answer to the commit that followed a SET
+      this.#setProcessed();
+      return;
+    }
     if (vector === DMP.GET_REPLY || vector === DMP.EVENT) {
       this.values.set(addr, value);
       const decoded = decodeProp(addr, value);
@@ -155,6 +220,23 @@ export class Ad4qDevice extends EventEmitter {
       this.#settle(addr, 'fail', value[0], vector);
     } else if (vector === DMP.SET_FAIL) {
       this.#settle(addr, 'fail', value[0], vector);
+    }
+  }
+
+  /**
+   * An AD4D applies a committed SET and answers it without naming an address or
+   * echoing the value, so the oldest waiting SET is done. What the unit now holds
+   * is still found out by the read-back that follows every write.
+   */
+  #setProcessed() {
+    for (const [addr, queue] of this.pending) {
+      const index = queue.findIndex((p) => p.kind === 'set');
+      if (index < 0) continue;
+      const [request] = queue.splice(index, 1);
+      clearTimeout(request.timer);
+      if (!queue.length) this.pending.delete(addr);
+      request.resolve(Buffer.alloc(0));
+      return;
     }
   }
 
@@ -258,7 +340,7 @@ export class Ad4qDevice extends EventEmitter {
   async readAll() {
     const wanted = [
       ...DEVICE_PROPS.map((p) => p.addr),
-      ...Array.from({ length: CHANNEL_COUNT }, (_, c) => CHANNEL_PROPS.map((p) => chanAddr(c + 1, p.obj))).flat(),
+      ...Array.from({ length: this.channels }, (_, c) => CHANNEL_PROPS.map((p) => chanAddr(c + 1, p.obj))).flat(),
     ];
     const got = await this.getMany(wanted);
     const state = { device: {}, channels: {} };
@@ -275,14 +357,129 @@ export class Ad4qDevice extends EventEmitter {
   async subscribeAll() {
     const addrs = [
       ...DEVICE_PROPS.map((p) => p.addr),
-      ...Array.from({ length: CHANNEL_COUNT }, (_, c) => [
-        ...[...CHANNEL_PROPS, LEVEL_PROP].map((p) => chanAddr(c + 1, p.obj)),
+      ...Array.from({ length: this.channels }, (_, c) => [
+        ...[...CHANNEL_PROPS, ...METER_PROPS].map((p) => chanAddr(c + 1, p.obj)),
         // the roster slots only fill briefly during an IR sync, so they are watched, not polled
         ...rosterAddrs(c + 1),
       ]).flat(),
     ];
     await this.subscribe(addrs);
   }
+
+
+  // --- RF scan ---------------------------------------------------------------------
+
+  /** What this unit says about its own scan, in kHz: `{ startKhz, stopKhz, originKhz, stepKhz }`. */
+  async scanLimits() {
+    const got = await this.getMany(Object.values(SCAN_LIMITS));
+    const khz = (addr) => {
+      const v = got.get(addr);
+      return v && v.length === 4 ? v.readUInt32BE(0) : null;
+    };
+    const limits = {
+      startKhz: khz(SCAN_LIMITS.START),
+      stopKhz: khz(SCAN_LIMITS.STOP),
+      originKhz: khz(SCAN_LIMITS.ORIGIN),
+      stepKhz: khz(SCAN_LIMITS.STEP),
+    };
+    if (Object.values(limits).some((v) => v === null)) throw new ScanFailed('the unit did not report its scan limits');
+    return limits;
+  }
+
+  /**
+   * Scan one antenna of one channel over `plan` (see `planScan`) and return its levels in
+   * dBm, one per 25 kHz from `plan.startKhz`. It does what Wireless Workbench does: watch
+   * the status, declare the whole range, write the configuration, trigger, collect the
+   * chunks, then release and unsubscribe. Takes about 21 ms a point.
+   *
+   * `signal` stops the wait; the unit finishes the scan it was told to run, so this does not
+   * return until it has, and another scan cannot be started before then.
+   */
+  async scan({ channel, antenna, plan, signal, onProgress }) {
+    if (!ANTENNAS[antenna]) throw new RangeError(`antenna must be A or B (got ${antenna})`);
+    if (this.scanning) throw new ScanFailed('a scan is already running on this unit');
+    this.scanning = true;
+    const ch = channel - 1;
+    const keys = statusKeys(ch);
+    const data = dataKey(ch, ANTENNAS[antenna].curve, plan.loIndex, plan.hiIndex);
+
+    const levels = new Array(plan.points).fill(NaN);
+    const refused = new Set();
+    let received = 0;
+    let strays = 0;
+    let status = null;
+    let sawActive = false;
+    let triggered = false;
+    const onString = ({ vector, key, value }) => {
+      if (vector === DMP.SET_FAIL) refused.add(`${key.replace(/^.*RF_SCAN:/, '').replace(/\/CH=.*/, '')} reason ${value[0]}`);
+      else if (vector === DMP.SUB_REJECT) refused.add(`subscription ${key.replace(/^.*RF_SCAN[_A-Z]*:/, '').slice(0, 24)} rejected`);
+      else if (key === keys.status && value.length) {
+        status = value[0];
+        if (status === SCAN_STATUS.ACTIVE) sawActive = true;
+      } else if (vector === DMP.EVENT && key.includes('RF_SCAN_DATA')) {
+        const chunk = parseDataEvent(key, value);
+        if (!chunk || chunk.curve !== ANTENNAS[antenna].curve) return;
+        chunk.dbm.forEach((dbm, i) => {
+          const at = chunk.lo + i - plan.loIndex;
+          if (at < 0 || at >= plan.points) strays += 1;
+          else {
+            if (Number.isNaN(levels[at])) received += 1;
+            levels[at] = dbm;
+          }
+        });
+        onProgress?.(received / plan.points);
+      }
+    };
+    this.on('string', onString);
+    const idle = () => status === SCAN_STATUS.FINISHING || (sawActive && status === SCAN_STATUS.IDLE);
+    try {
+      // the read that claims a scan; it is spent by the scan, so it is made before every one
+      await this.get(chanAddr(channel, SCAN_OBJ.CLAIM));
+      // Wireless Workbench's order: status subscriptions, configuration, data subscription, trigger.
+      // The unit sends no "accepted" reply to these that this driver sees, yet streams once they are in.
+      await this.session.send(strBatch(DMP.SUBSCRIBE, [keys.progress, keys.sweepId, keys.status].map((key) => ({ key }))));
+      await this.session.send(strBatch(DMP.SET, configEntries(ch, { startKhz: plan.startKhz, stopKhz: plan.stopKhz, stepKhz: plan.stepKhz, antenna })));
+      await this.session.send(strBatch(DMP.SUBSCRIBE, [{ key: data }]));
+      await this.session.send(dmpPdu(DMP.SET, chanAddr(channel, SCAN_OBJ.START), Buffer.from([0])));
+      triggered = true;
+      await waitFor(
+        () => {
+          if (refused.size) {
+            // every config key refused with reason 1: the channel's scan is held by another session
+            const busy = [...refused].every((r) => / reason 1$/.test(r)) && refused.size >= 6;
+            throw new ScanFailed(
+              busy
+                ? `channel ${channel} is already being scanned by another controller (Wireless Workbench, or another SoundBase); wait for that scan to finish, or scan from another channel`
+                : `the unit refused the scan (${[...refused].join(', ')})`
+            );
+          }
+          return received >= plan.points;
+        },
+        this.scanTimeoutMs ?? scanDurationMs(plan.points) * 1.6 + 20_000,
+        { signal, what: 'finish the scan' }
+      );
+      if (strays > 0) throw new ScanFailed(`the unit sent ${strays} samples outside the range that was asked for`);
+      // a short wait for the unit to say it is done, as it does after the last chunk
+      await waitFor(idle, 5000, { signal, what: 'report the scan finished' }).catch((err) => {
+        if (err instanceof ScanAborted) throw err;
+      });
+      return levels;
+    } finally {
+      try {
+        // The release ends a scan that is still running (the unit is idle again within about half
+        // a second), so an abort or a failure does not leave the unit scanning. The subscriptions
+        // are left in place on purpose: an UNSUBSCRIBE of the scan keys, committed or not, makes
+        // the unit silently ignore every later scan in the session.
+        await this.session.send(dmpPdu(DMP.SET, chanAddr(channel, SCAN_OBJ.RELEASE), Buffer.from([0])), { commit: true });
+        if (triggered && !idle()) await waitFor(idle, 4000, { what: 'return to idle' }).catch(() => {});
+      } catch {
+        // a session that is already gone has nothing to release
+      }
+      this.off('string', onString);
+      this.scanning = false;
+    }
+  }
+
 
   // --- writes ----------------------------------------------------------------------
 

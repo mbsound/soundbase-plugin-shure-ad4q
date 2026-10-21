@@ -10,6 +10,7 @@
 //   npm run ad4q -- gain    <ip> <ch> <dB>
 //   npm run ad4q -- freq    <ip> <ch> <MHz>        retuning drops the RF link
 //   npm run ad4q -- name    <ip> <ch> <text>
+//   npm run ad4q -- scan    <ip> <ch> <A|B> [startMHz stopMHz] [--out file.json]   about 21 ms a point
 //
 // Every write is read back and reported CONFIRMED or NOT APPLIED, because a SET
 // the unit silently ignores looks the same as one that worked.
@@ -17,7 +18,9 @@
 import { Ad4qDevice, WriteRefused } from '../driver/ad4q/device.js';
 import { SlpBrowser } from '../driver/acn/slp.js';
 import { isIpv4 } from '../driver/netutil.js';
-import { CHANNEL_COUNT } from '../driver/ad4q/properties.js';
+import { writeFileSync } from 'node:fs';
+import { CHANNEL_COUNT, DEV, decodeString, isReceiverAdvert } from '../driver/ad4q/properties.js';
+import { defaultSpan, planScan, scanDurationMs } from '../driver/ad4q/scan.js';
 
 const [command, ...args] = process.argv.slice(2);
 const log = (level, message) => level !== 'info' && console.error(`[${level}] ${message}`);
@@ -26,9 +29,11 @@ const fail = (message) => {
   process.exit(1);
 };
 
+// narrowed to the unit's own channel count once it has connected (an AD4D has two)
+let channelLimit = CHANNEL_COUNT;
 const channelArg = (text) => {
   const n = Number(text);
-  if (!Number.isInteger(n) || n < 1 || n > CHANNEL_COUNT) fail(`channel must be 1..${CHANNEL_COUNT}`);
+  if (!Number.isInteger(n) || n < 1 || n > channelLimit) fail(`channel must be 1..${channelLimit}`);
   return n;
 };
 const hostArg = (text) => {
@@ -37,7 +42,7 @@ const hostArg = (text) => {
 };
 
 async function connect(host) {
-  const browser = new SlpBrowser({ filter: (u) => /^ad4q/i.test(u.fctn), targets: [host], log });
+  const browser = new SlpBrowser({ filter: isReceiverAdvert, targets: [host], log });
   const device = new Ad4qDevice({ host, browser, log });
   device.on('lost', (err) => fail(`lost the unit: ${err.message}`));
   console.error(`connecting to ${host} (the unit wants a few seconds of handshake)...`);
@@ -59,7 +64,7 @@ async function write(device, label, run, expected) {
 
 async function main() {
   if (command === 'discover') {
-    const browser = new SlpBrowser({ filter: (u) => /^ad4q/i.test(u.fctn), log });
+    const browser = new SlpBrowser({ filter: isReceiverAdvert, log });
     browser.on('found', (u) => console.log(`${u.ip}:${u.port}  ${u.fctn}  "${u.uacn}"  ${u.cidText}`));
     await browser.start();
     console.error('listening for 10 seconds...');
@@ -70,6 +75,7 @@ async function main() {
   }
   const host = hostArg(args[0]);
   const device = await connect(host);
+  channelLimit = device.channels;
   try {
     if (command === 'status') {
       const all = await device.readAll();
@@ -80,6 +86,42 @@ async function main() {
       await device.subscribeAll();
       console.error('watching; change something on the unit. Ctrl-C to stop.');
       await new Promise(() => {});
+    } else if (command === 'scan') {
+      const ch = channelArg(args[1]);
+      const antenna = String(args[2] ?? '').toUpperCase();
+      if (antenna !== 'A' && antenna !== 'B') fail('antenna is A or B');
+      const model = decodeString(await device.get(DEV.MODEL));
+      const limits = await device.scanLimits();
+      const rest = args.slice(3).filter((a) => !a.startsWith('--') && Number.isFinite(Number(a)));
+      const span = rest.length >= 2 ? { startKhz: Number(rest[0]) * 1000, stopKhz: Number(rest[1]) * 1000 } : defaultSpan(limits);
+      const plan = planScan({ limits, ...span });
+      if (!plan) fail(`nothing is left of that range once it is held inside what the unit scans (${limits.startKhz / 1000} to ${limits.stopKhz / 1000} MHz)`);
+      console.error(`${model} scans ${limits.startKhz / 1000} to ${limits.stopKhz / 1000} MHz (index from ${limits.originKhz / 1000} MHz, ${limits.stepKhz} kHz steps)`);
+      console.error(`antenna ${antenna} of channel ${ch}, ${plan.startKhz / 1000} to ${plan.stopKhz / 1000} MHz, ${plan.points} points, about ${Math.round(scanDurationMs(plan.points) / 1000)} s`);
+      let lastTen = -1;
+      const levels = await device.scan({
+        channel: ch,
+        antenna,
+        plan,
+        onProgress: (f) => {
+          const ten = Math.floor(f * 10);
+          if (ten !== lastTen) console.error(`  ${ten * 10}%`);
+          lastTen = ten;
+        },
+      });
+      const mhz = (i) => (plan.startKhz + i * plan.stepKhz) / 1000;
+      const peaks = [];
+      for (let i = 0; i < levels.length; i += 1) {
+        const near = levels.slice(Math.max(0, i - 40), i + 41);
+        if (levels[i] >= Math.max(...near) && levels[i] > Math.min(...levels) + 12 && (!peaks.length || mhz(i) - mhz(peaks.at(-1)) > 3)) peaks.push(i);
+      }
+      console.log(`${levels.length} points, ${Math.min(...levels)} to ${Math.max(...levels)} dBm; strongest peaks:`);
+      for (const i of [...peaks].sort((a, b) => levels[b] - levels[a]).slice(0, 8)) console.log(`  ${mhz(i).toFixed(3)} MHz  ${levels[i]} dBm`);
+      const out = args.find((a) => a.startsWith('--out='))?.slice(6);
+      if (out) {
+        writeFileSync(out, JSON.stringify({ plan, antenna, channel: ch, levels }));
+        console.error(`saved ${out}`);
+      }
     } else if (command === 'tone') {
       const ch = channelArg(args[1]);
       const level = args[2] === 'off' ? null : Number(args[2]);
@@ -100,7 +142,7 @@ async function main() {
       const ch = channelArg(args[1]);
       await write(device, `name ch ${ch}`, () => device.setChannel(ch, 'name', args.slice(2).join(' ')), args.slice(2).join(' '));
     } else {
-      fail('usage: ad4q.mjs discover | status <ip> | watch <ip> | tone|mute|gain|freq|name <ip> <ch> <value>');
+      fail('usage: ad4q.mjs discover | status <ip> | watch <ip> | scan <ip> <ch> <A|B> [startMHz stopMHz] | tone|mute|gain|freq|name <ip> <ch> <value>');
     }
   } finally {
     await device.close();

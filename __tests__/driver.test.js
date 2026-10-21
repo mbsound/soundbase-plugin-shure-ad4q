@@ -4,16 +4,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import dgram from 'node:dgram';
-import { Ad4qDevice, WriteRefused } from '../driver/ad4q/device.js';
+import { Ad4qDevice, ScanAborted, WriteRefused } from '../driver/ad4q/device.js';
 import { SlpBrowser } from '../driver/acn/slp.js';
 import { AcnSession } from '../driver/acn/session.js';
 import { FakeAd4q } from '../driver/fake/fake-ad4q.js';
-import { CH, chanAddr, decodeUint } from '../driver/ad4q/properties.js';
+import { CH, chanAddr, channelsFor, decodeUint, isReceiverAdvert, modelOf } from '../driver/ad4q/properties.js';
+import { DMP, strBatch } from '../driver/acn/pdu.js';
+import { SCAN_OBJ, configEntries, planScan } from '../driver/ad4q/scan.js';
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function connected(t, overrides = {}) {
-  const fake = new FakeAd4q();
+async function connected(t, overrides = {}, fakeOptions = {}) {
+  const fake = new FakeAd4q(fakeOptions);
   await fake.listen();
   const device = new Ad4qDevice({
     host: '127.0.0.1',
@@ -43,7 +45,7 @@ test('a session joins in both directions and associates DMP protocol 2', async (
 test('every modelled property is read, for the device and all four channels', async (t) => {
   const { device } = await connected(t);
   const all = await device.readAll();
-  assert.equal(all.device.model, 'AD4Q-C');
+  assert.equal(all.device.model, 'AD4Q-A');
   assert.equal(all.device.serial, 'SIM000001');
   assert.deepEqual(Object.keys(all.channels), ['1', '2', '3', '4']);
   const one = all.channels[1];
@@ -109,7 +111,14 @@ test('changes the unit pushes arrive as events once subscribed', async (t) => {
   await delay(150);
   assert.ok(seen.some((p) => p.channel === 3 && p.key === 'muted' && p.value === true));
   assert.ok(seen.some((p) => p.channel === 3 && p.key === 'gainDb' && p.value === -10));
-  assert.ok(seen.some((p) => p.key === 'levelDb'), 'the live level streams');
+  // the three live meters stream: RF at each antenna in dBm (tenths on the wire), and audio
+  const rfA = seen.find((p) => p.key === 'rfADbm');
+  const rfB = seen.find((p) => p.key === 'rfBDbm');
+  const audio = seen.find((p) => p.key === 'audioDb');
+  assert.ok(rfA && rfB && audio, 'the live meters stream');
+  assert.ok(rfA.value <= -70 && rfA.value >= -115 && Number.isInteger(rfA.value * 10), `rf A ${rfA.value} dBm`);
+  assert.ok(rfB.value < rfA.value, 'the fake hears antenna B a little weaker');
+  assert.equal(audio.value, -115, 'audio sits at the silence floor');
 });
 
 test('a unit that goes quiet is reported as lost rather than waited on forever', async (t) => {
@@ -178,7 +187,68 @@ test('a unit is found from its SLP advert and then opened from its address alone
   });
   t.after(() => device.close());
   await device.connect();
-  assert.equal((await device.readAll()).device.model, 'AD4Q-C');
+  assert.equal((await device.readAll()).device.model, 'AD4Q-A');
+});
+
+test('an AD4D is read for its two channels and no more', async (t) => {
+  const { fake, device } = await connected(t, { channels: 2 }, { model: 'AD4D' });
+  assert.equal(fake.channels, 2);
+  const all = await device.readAll();
+  assert.equal(all.device.model, 'AD4D-A');
+  assert.deepEqual(Object.keys(all.channels), ['1', '2']);
+  // nothing was asked of channels 3 and 4, which the unit would never answer
+  assert.equal(device.timeouts, 0);
+});
+
+test('a write to an AD4D, which answers a SET without echoing it, is confirmed by the read-back', async (t) => {
+  const { fake, device } = await connected(t, { channels: 2 }, { model: 'AD4D' });
+  assert.equal(fake.echoSets, false);
+  // the unit answers the commit with a reply that names no address; that must not be waited out
+  const started = Date.now();
+  assert.equal(await device.setChannel(1, 'name', 'Test1'), 'Test1');
+  assert.ok(Date.now() - started < 700, 'the write finished without waiting for a timeout');
+  assert.equal(fake.writes.at(-1).committed, true);
+  assert.equal((await device.readAll()).channels[1].name, 'Test1');
+  // a refused value is still a refusal, not a silent success
+  await assert.rejects(() => device.setChannel(1, 'gainDb', 99), WriteRefused);
+});
+
+test('the channel count is learned from the advert when the caller does not give it', async (t) => {
+  const slpPort = await freeUdpPort();
+  const fake = new FakeAd4q({ slpPort, model: 'AD4D' });
+  await fake.listen();
+  const browser = new SlpBrowser({ port: slpPort, multicast: false, filter: isReceiverAdvert });
+  t.after(async () => {
+    browser.stop();
+    await fake.stop();
+  });
+  const unit = await browser.find('127.0.0.1', 3000);
+  assert.equal(unit.fctn, 'AD4D_RX');
+
+  const device = new Ad4qDevice({
+    host: '127.0.0.1',
+    browser,
+    localIp: '127.0.0.1',
+    advert: false,
+    timings: { sendGapMs: 2, connectTimeoutMs: 4000 },
+  });
+  t.after(() => device.close());
+  assert.equal(device.channels, 4, 'before it has found the unit, the largest receiver is assumed');
+  await device.connect();
+  assert.equal(device.channels, 2);
+  assert.deepEqual(Object.keys((await device.readAll()).channels), ['1', '2']);
+});
+
+test('model and channel count come from the function tag a unit advertises', () => {
+  assert.equal(modelOf('AD4D_RX'), 'AD4D');
+  assert.equal(modelOf('ad4q_rx'), 'AD4Q');
+  assert.equal(modelOf('ULXD4_RX'), null);
+  assert.equal(modelOf(undefined), null);
+  assert.equal(isReceiverAdvert({ fctn: 'AD4D_RX' }), true);
+  assert.equal(isReceiverAdvert({ fctn: 'QLXD4' }), false);
+  assert.equal(channelsFor('AD4D'), 2);
+  assert.equal(channelsFor('AD4Q'), 4);
+  assert.equal(channelsFor('something-new'), 4);
 });
 
 test('a unit nothing advertises is reported by address, not left to time out silently', async () => {
@@ -225,4 +295,144 @@ test('the transmitter bank reads as absent until one is synced, and the roster f
   await device.unlinkSlot(1, 3);
   assert.deepEqual([...fake.writes.at(-1).value], new Array(16).fill(0));
   await assert.rejects(() => device.unlinkSlot(1, 9), RangeError);
+});
+
+test('HD mode is written and read back, then the unit restarts and the session is reported lost', async (t) => {
+  const { fake, device } = await connected(t, {}, { restartMs: 300 });
+  const lost = new Promise((resolve) => device.once('lost', resolve));
+  assert.equal(await device.setDevice('hdMode', true), true);
+  await lost;
+  assert.equal(fake.restarts, 1);
+  await device.close();
+  assert.equal(device.connected, false);
+  // once it is back, a fresh session finds the setting kept
+  await delay(400);
+  const again = new Ad4qDevice({ host: '127.0.0.1', port: fake.controlPort, cid: fake.cid.toString('hex'), localIp: '127.0.0.1', advert: false, timings: { sendGapMs: 2, connectTimeoutMs: 4000 }, requestTimeoutMs: 800 });
+  t.after(() => again.close());
+  await again.connect();
+  assert.equal((await again.readAll()).device.hdMode, true);
+});
+
+// --- the RF scan --------------------------------------------------------------------
+
+const expectedLevels = (fake, plan, antenna) =>
+  Array.from({ length: plan.points }, (_, i) => Math.round(fake.scanLevelDbm(plan.startKhz + i * plan.stepKhz, antenna) * 10) / 10);
+
+test('a band change moves the scan limits, and the unit pushes them', async (t) => {
+  const { device } = await connected(t);
+  await device.subscribeAll();
+  const pushed = [];
+  device.on('prop', (p) => ['band', 'scanStartKhz', 'scanStopKhz'].includes(p.key) && pushed.push(`${p.key}=${p.value}`));
+  assert.equal(await device.setDevice('band', 'G62'), 'G62');
+  await delay(150);
+  assert.deepEqual((await device.scanLimits()), { startKhz: 510_100, stopKhz: 529_900, originKhz: 470_000, stepKhz: 25 });
+  assert.ok(pushed.includes('scanStartKhz=510100') && pushed.includes('scanStopKhz=529900'), pushed.join(' '));
+  await device.setDevice('band', 'G57');
+});
+
+test('a unit reports its own scan range, origin and step', async (t) => {
+  const { device } = await connected(t, {}, { scan: { originKhz: 606_000, startKhz: 606_125, stopKhz: 809_875 } });
+  assert.deepEqual(await device.scanLimits(), { startKhz: 606_125, stopKhz: 809_875, originKhz: 606_000, stepKhz: 25 });
+});
+
+test('a scan returns one level per point, at the frequency each belongs to', async (t) => {
+  const { fake, device } = await connected(t, { channels: 2 }, { model: 'AD4D' });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 505_000, stopKhz: 510_000 });
+  const progress = [];
+  const a = await device.scan({ channel: 1, antenna: 'A', plan, onProgress: (f) => progress.push(f) });
+  assert.equal(a.length, 201);
+  assert.deepEqual(a, expectedLevels(fake, plan, 'A'));
+  // the strong signal at 507.000 MHz is point 80, and is 12 dB stronger to antenna A than to B
+  assert.equal(a.indexOf(Math.max(...a)), 80);
+  const b = await device.scan({ channel: 2, antenna: 'B', plan });
+  assert.deepEqual(b, expectedLevels(fake, plan, 'B'));
+  assert.ok(a[80] - b[80] >= 11);
+  assert.deepEqual(fake.scans.map((s) => [s.channel, s.antenna]), [[1, 'A'], [2, 'B']]);
+  assert.ok(progress.length > 1 && progress.at(-1) === 1, 'progress reaches 100%');
+});
+
+test('a unit whose range starts elsewhere is scanned by its own index', async (t) => {
+  const geometry = { originKhz: 606_000, startKhz: 606_125, stopKhz: 809_875 };
+  const { fake, device } = await connected(t, {}, { scan: geometry });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 700_000, stopKhz: 700_500 });
+  assert.equal(plan.loIndex, 3760);
+  assert.deepEqual(await device.scan({ channel: 1, antenna: 'A', plan }), expectedLevels(fake, plan, 'A'));
+});
+
+test('the unit refuses the scan\'s configuration until the claim has been read', async (t) => {
+  const { device } = await connected(t);
+  const refused = [];
+  device.on('string', (e) => e.vector === DMP.SET_FAIL && refused.push(e.value[0]));
+  const config = strBatch(DMP.SET, configEntries(0, { startKhz: 505_000, stopKhz: 506_000, antenna: 'A' }));
+  await device.session.send(config);
+  await delay(250);
+  assert.deepEqual(refused, [1, 1, 1, 1, 1, 1]);
+  refused.length = 0;
+  await device.get(chanAddr(1, SCAN_OBJ.CLAIM));
+  await device.session.send(config);
+  await delay(250);
+  assert.deepEqual(refused, []);
+});
+
+test('stopping a scan releases the unit at once, and the next scan runs', async (t) => {
+  const { fake, device } = await connected(t, {}, { scanChunkMs: 40 });
+  const limits = await device.scanLimits();
+  const whole = planScan({ limits, startKhz: limits.startKhz, stopKhz: limits.stopKhz });
+  const stop = new AbortController();
+  setTimeout(() => stop.abort(), 250);
+  const started = Date.now();
+  await assert.rejects(() => device.scan({ channel: 1, antenna: 'A', plan: whole, signal: stop.signal }), ScanAborted);
+  assert.ok(Date.now() - started < 3000, 'did not wait out the scan');
+  assert.equal(fake.scanState.timer, null, 'the unit was released');
+  const small = planScan({ limits, startKhz: 505_000, stopKhz: 506_000 });
+  assert.equal((await device.scan({ channel: 1, antenna: 'A', plan: small })).length, small.points);
+});
+
+test('several scans in one session each run, as the composite needs', async (t) => {
+  const { fake, device } = await connected(t, { channels: 2 }, { model: 'AD4D' });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 505_000, stopKhz: 506_000 });
+  for (const antenna of ['A', 'B', 'A']) assert.equal((await device.scan({ channel: 1, antenna, plan })).length, plan.points);
+  assert.deepEqual(fake.scans.map((s) => s.antenna), ['A', 'B', 'A']);
+  // the driver never unsubscribes the scan keys: a real unit then ignores every later scan
+  assert.equal(fake.scanState.poisoned, false);
+});
+
+test('a scan after a scan key was unsubscribed is ignored by the unit, and reported', async (t) => {
+  const { device } = await connected(t, {}, { scanChunkMs: 1 });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 505_000, stopKhz: 505_500 });
+  await device.scan({ channel: 1, antenna: 'A', plan });
+  await device.session.send(strBatch(DMP.UNSUBSCRIBE, [{ key: 'RF_SCAN:CURRENT_STATUS/CH=0/SCAN=0' }]));
+  device.scanTimeoutMs = 400;
+  await assert.rejects(() => device.scan({ channel: 1, antenna: 'A', plan }), /did not finish the scan/);
+});
+
+test('a channel being scanned by another session is refused, and says so', async (t) => {
+  const { fake, device: a } = await connected(t, {}, { scanChunkMs: 40 });
+  const b = new Ad4qDevice({ host: '127.0.0.1', port: fake.controlPort, cid: fake.cid.toString('hex'), localIp: '127.0.0.1', advert: false, timings: { sendGapMs: 2, connectTimeoutMs: 4000 }, requestTimeoutMs: 800 });
+  t.after(() => b.close());
+  await b.connect();
+  const limits = await a.scanLimits();
+  const whole = planScan({ limits, startKhz: limits.startKhz, stopKhz: limits.stopKhz });
+  const stop = new AbortController();
+  const running = a.scan({ channel: 1, antenna: 'A', plan: whole, signal: stop.signal }).catch(() => {});
+  await delay(200);
+  b.scanTimeoutMs = 1500;
+  await assert.rejects(() => b.scan({ channel: 1, antenna: 'B', plan: planScan({ limits, startKhz: 505_000, stopKhz: 505_500 }) }), /already being scanned by another controller/);
+  stop.abort();
+  await running;
+  await delay(100);
+  assert.equal((await b.scan({ channel: 1, antenna: 'B', plan: planScan({ limits, startKhz: 505_000, stopKhz: 505_500 }) })).length, 21, 'free again once released');
+});
+
+test('a second scan on the same session cannot start while one is running', async (t) => {
+  const { device } = await connected(t, {}, { scanChunkMs: 20 });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 505_000, stopKhz: 508_000 });
+  const first = device.scan({ channel: 1, antenna: 'A', plan });
+  await assert.rejects(() => device.scan({ channel: 1, antenna: 'B', plan }), /already running/);
+  assert.equal((await first).length, plan.points);
 });

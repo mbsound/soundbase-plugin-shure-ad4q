@@ -6,7 +6,26 @@
 // big-endian, signed where the codec says so; a string is a two-byte
 // big-endian length that counts itself, then ASCII.
 
+import { SCAN_LIMITS } from './scan.js';
+
 export const CHANNEL_COUNT = 4;
+
+/** The receivers this driver speaks to, by the function tag they advertise (`AD4D_RX`, …). */
+export const MODELS = Object.freeze({
+  AD4Q: { channels: 4 },
+  AD4D: { channels: 2 },
+});
+
+/** `AD4D` for an `AD4D_RX` advert, or null for anything that is not one of these receivers. */
+export function modelOf(fctn) {
+  const m = /^(ad4[qd])/i.exec(String(fctn ?? ''));
+  return m ? m[1].toUpperCase() : null;
+}
+
+export const isReceiverAdvert = (unit) => modelOf(unit?.fctn) !== null;
+
+/** How many channels a model has; an unrecognised one is assumed to be the largest. */
+export const channelsFor = (model) => MODELS[String(model ?? '').toUpperCase()]?.channels ?? CHANNEL_COUNT;
 const CHANNEL_CLASS = 0x02;
 
 /** Per-channel objects. */
@@ -14,7 +33,9 @@ export const CH = Object.freeze({
   NAME: 0x0001,
   GAIN_DB: 0x0102,
   MUTE: 0x0104,
-  LEVEL: 0x0114,
+  AUDIO_LEVEL: 0x0114,
+  RF_LEVEL_A: 0x0812,
+  RF_LEVEL_B: 0x0813,
   TALK_ROUTING: 0x0123,
   OVERLOAD_HOLD: 0x0125,
   TONE_ACTIVE: 0x0126,
@@ -259,12 +280,15 @@ export const CHANNEL_PROPS = Object.freeze([
   { key: 'txBattery', obj: CH.TX_BATTERY, decode: decodeTxBattery, nullable: true },
 ]);
 
-/** The live level, subscribed to rather than polled. */
-export const LEVEL_PROP = Object.freeze({
-  key: 'levelDb',
-  obj: CH.LEVEL,
-  decode: (v) => (v.length === 4 ? v.readInt32BE(0) : null),
-});
+/**
+ * The live meters, subscribed to rather than polled: the RF level at each antenna
+ * (tenths of a dBm on the wire) and the audio level (dB, -115 at silence).
+ */
+export const METER_PROPS = Object.freeze([
+  { key: 'rfADbm', obj: CH.RF_LEVEL_A, decode: (v) => (v.length === 2 ? v.readInt16BE(0) / 10 : null) },
+  { key: 'rfBDbm', obj: CH.RF_LEVEL_B, decode: (v) => (v.length === 2 ? v.readInt16BE(0) / 10 : null) },
+  { key: 'audioDb', obj: CH.AUDIO_LEVEL, decode: (v) => (v.length === 4 ? v.readInt32BE(0) : null) },
+]);
 
 export const DEVICE_PROPS = Object.freeze([
   { key: 'model', addr: DEV.MODEL, decode: decodeString },
@@ -277,10 +301,13 @@ export const DEVICE_PROPS = Object.freeze([
   { key: 'quadversity', addr: DEV.QUADVERSITY, decode: decodeBool },
   { key: 'antennaBias', addr: DEV.ANTENNA_BIAS, decode: decodeBool },
   { key: 'panelLock', addr: DEV.PANEL_LOCK, decode: decodeBool },
+  // what the unit will scan, in kHz; the start and stop follow the band and are pushed when it changes
+  { key: 'scanStartKhz', addr: SCAN_LIMITS.START, decode: decodeUint },
+  { key: 'scanStopKhz', addr: SCAN_LIMITS.STOP, decode: decodeUint },
 ]);
 
 const CHANNEL_PROP_BY_OBJ = new Map(
-  [...CHANNEL_PROPS, LEVEL_PROP].map((prop) => [prop.obj, prop])
+  [...CHANNEL_PROPS, ...METER_PROPS].map((prop) => [prop.obj, prop])
 );
 const DEVICE_PROP_BY_ADDR = new Map(DEVICE_PROPS.map((prop) => [prop.addr, prop]));
 
