@@ -18,6 +18,7 @@ import { EventEmitter } from 'node:events';
 import {
   COMMIT_PDU,
   SDT,
+  WRAP_TRAILER_ACK_REQUEST,
   WRAP_TRAILER_FIRST,
   buildJoin,
   buildJoinAccept,
@@ -64,7 +65,7 @@ export class AcnSession extends EventEmitter {
   /**
    * @param {{
    *   host: string, port: number, deviceCid: Buffer, localIp: string,
-   *   advert?: boolean, fctn?: string, uacn?: string,
+   *   advert?: boolean, fctn?: string, uacn?: string, cid?: Buffer,
    *   timings?: Partial<typeof DEFAULT_TIMINGS>,
    *   log?: (level: string, message: string) => void,
    * }} options
@@ -77,6 +78,7 @@ export class AcnSession extends EventEmitter {
     advert = true,
     fctn = 'WWB6',
     uacn = 'WWB 6X',
+    cid = null,
     timings,
     log = () => {},
   }) {
@@ -90,8 +92,10 @@ export class AcnSession extends EventEmitter {
     this.uacn = uacn;
     this.timings = { ...DEFAULT_TIMINGS, ...timings };
     this.log = log;
+    // AD4Q_DEBUG=1 logs every datagram in both directions, for working out what a unit is doing
+    this.debug = process.env.AD4Q_DEBUG === '1';
 
-    this.cid = sessionCid();
+    this.cid = cid ?? sessionCid();
     this.ourChan = 0x8000 | (randomBytes(1)[0] << 4);
     this.devChan = null;
     this.totalSeq = (this.ourChan + 1) & 0xffff;
@@ -174,6 +178,7 @@ export class AcnSession extends EventEmitter {
   }
 
   #sendRaw(packet) {
+    if (this.debug) this.log('debug', `TX ${packet.length}B ${packet.toString('hex')}`);
     this.socket?.send(packet, this.port, this.host);
   }
 
@@ -192,19 +197,22 @@ export class AcnSession extends EventEmitter {
     const trailer = this.firstRel ? WRAP_TRAILER_FIRST : undefined;
     this.firstRel = false;
     this.unacked.set(this.relSeq, blocks);
+    if (this.debug) this.log('debug', `SEND reliable seq=0x${this.relSeq.toString(16)} (${this.unacked.size} unacked)`);
     this.#sendRaw(
       buildWrapper(this.cid, this.ourChan, total, this.relSeq, this.firstRelSeq, blocks, true, trailer)
     );
   }
 
-  #sendUnreliable(blocks) {
+  #sendUnreliable(blocks, trailer) {
     const total = this.totalSeq;
     this.totalSeq = (this.totalSeq + 1) & 0xffff;
-    this.#sendRaw(buildWrapper(this.cid, this.ourChan, total, this.relSeq, this.relSeq, blocks, false));
+    this.#sendRaw(buildWrapper(this.cid, this.ourChan, total, this.relSeq, this.relSeq, blocks, false, trailer));
   }
 
   #ackDevice() {
-    this.#sendUnreliable([clientBlock(1, 1, this.devChan ?? 0, mgmtAck(this.devRel))]);
+    // while sends are unacknowledged, ask the unit to acknowledge them: it only does so on request
+    const ask = this.unacked.size > 0 ? WRAP_TRAILER_ACK_REQUEST : undefined;
+    this.#sendUnreliable([clientBlock(1, 1, this.devChan ?? 0, mgmtAck(this.devRel))], ask);
     this.lastKeepalive = Date.now();
   }
 
@@ -251,6 +259,7 @@ export class AcnSession extends EventEmitter {
   // --- receiving -------------------------------------------------------------
 
   #onDatagram(data, rinfo) {
+    if (this.debug) this.log('debug', `RX ${data.length}B from ${rinfo.address}:${rinfo.port} ${data.toString('hex')}`);
     if (this.closed || rinfo.address !== this.host) return;
     try {
       const root = rootParse(data);
@@ -313,6 +322,7 @@ export class AcnSession extends EventEmitter {
   }
 
   #onOurAck(ackSeq) {
+    if (this.debug) this.log('debug', `ACK 0x${ackSeq.toString(16)} while unacked=[${[...this.unacked.keys()].map((q) => q.toString(16)).join(',')}]`);
     for (const seq of [...this.unacked.keys()]) {
       if (((seq - ackSeq) & 0xffff) === 0 || ((ackSeq - seq) & 0xffff) < 0x8000) this.unacked.delete(seq);
     }

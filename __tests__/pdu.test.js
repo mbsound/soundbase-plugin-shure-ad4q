@@ -12,6 +12,7 @@ import {
   dmpPdu,
   mgmtAck,
   parseDmp,
+  strBatch,
   parseWrapper,
   pduDecode,
   pduEncode,
@@ -63,6 +64,71 @@ test('dmp values parse, including continuation PDUs that inherit the vector', ()
       [DMP.GET_REPLY, 0x02000104, '01'],
     ]
   );
+});
+
+test('the AD4D\'s answer to a committed SET names no address, and parses as one with a null address', () => {
+  // as captured from an AD4D: GET_FAIL, no-address header, code 0001
+  const reply = Buffer.from('700609000001', 'hex');
+  assert.deepEqual(
+    parseDmp(reply).map((p) => [p.vector, p.addr, hex(p.value)]),
+    [[DMP.GET_FAIL, null, '0001']]
+  );
+  // and the commit PDU we send, which has the same shape but only five bytes, is not mistaken for one
+  assert.deepEqual(parseDmp(COMMIT_PDU), []);
+});
+
+// Bytes below are from a Wireless Workbench scan of an AD4D (channel 1, antenna A).
+const WWB_SCAN_CONFIG = Buffer.from(
+  '702d0207002552465f5343414e3a5343414e5f53544152545f465245512f43483d302f5343414e3d3000072c6d' +
+    '102a002452465f5343414e3a5343414e5f53544f505f465245512f43483d302f5343414e3d3000094683' +
+    '102a002452465f5343414e3a5343414e5f535445505f465245512f43483d302f5343414e3d3000000019' +
+    '102e002852465f5343414e3a5343414e5f5245534f4c5554494f4e5f42572f43483d302f5343414e3d30000000c8' +
+    '102c002952465f5343414e3a5343414e5f5245504541545f524551554553542f43483d302f5343414e3d3001' +
+    '1028002252465f5343414e3a43555256455f53454c4543542f43483d302f5343414e3d3000000002',
+  'hex'
+);
+
+test('the scan configuration is written as Wireless Workbench writes it, byte for byte', () => {
+  const be32 = (n) => Buffer.from([n >>> 24, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]);
+  const built = strBatch(DMP.SET, [
+    { key: 'RF_SCAN:SCAN_START_FREQ/CH=0/SCAN=0', value: be32(470125) },
+    { key: 'RF_SCAN:SCAN_STOP_FREQ/CH=0/SCAN=0', value: be32(607875) },
+    { key: 'RF_SCAN:SCAN_STEP_FREQ/CH=0/SCAN=0', value: be32(25) },
+    { key: 'RF_SCAN:SCAN_RESOLUTION_BW/CH=0/SCAN=0', value: be32(200) },
+    { key: 'RF_SCAN:SCAN_REPEAT_REQUEST/CH=0/SCAN=0', value: Buffer.from([1]) },
+    { key: 'RF_SCAN:CURVE_SELECT/CH=0/SCAN=0', value: be32(2) },
+  ]);
+  assert.equal(hex(built), hex(WWB_SCAN_CONFIG));
+});
+
+test('string-keyed PDUs parse, continuation PDUs included', () => {
+  const entries = parseDmp(WWB_SCAN_CONFIG);
+  assert.deepEqual(
+    entries.map((e) => [e.vector, e.addr, e.key, hex(e.value)]),
+    [
+      [DMP.SET, null, 'RF_SCAN:SCAN_START_FREQ/CH=0/SCAN=0', '00072c6d'],
+      [DMP.SET, null, 'RF_SCAN:SCAN_STOP_FREQ/CH=0/SCAN=0', '00094683'],
+      [DMP.SET, null, 'RF_SCAN:SCAN_STEP_FREQ/CH=0/SCAN=0', '00000019'],
+      [DMP.SET, null, 'RF_SCAN:SCAN_RESOLUTION_BW/CH=0/SCAN=0', '000000c8'],
+      [DMP.SET, null, 'RF_SCAN:SCAN_REPEAT_REQUEST/CH=0/SCAN=0', '01'],
+      [DMP.SET, null, 'RF_SCAN:CURVE_SELECT/CH=0/SCAN=0', '00000002'],
+    ]
+  );
+});
+
+test('a sample chunk from the unit is an EVENT keyed with the indices it covers', () => {
+  const chunk = Buffer.from(
+    '70650407003a2652465f5343414e5f444154413a525353492f43483d302f5343414e3d302f43555256455f4944583d312f' +
+      '465245515f4944583d352d3230' +
+      '002700000010' +
+      '02fc4dfc2bfc24fc24fc19fc26fc1efc1cfc1bfc1dfc21fc24fc42fc65fc70fc79',
+    'hex'
+  );
+  const [event] = parseDmp(chunk);
+  assert.equal(event.vector, DMP.EVENT);
+  assert.equal(event.key, '&RF_SCAN_DATA:RSSI/CH=0/SCAN=0/CURVE_IDX=1/FREQ_IDX=5-20');
+  assert.equal(event.value.readUInt16BE(0), 0x27);
+  assert.equal(event.value.readUInt32BE(2), 16);
 });
 
 test('a batch is one full PDU and one continuation PDU per further address', () => {

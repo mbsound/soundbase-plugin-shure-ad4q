@@ -24,6 +24,7 @@ export const DMP = Object.freeze({
   GET_REPLY: 3,
   EVENT: 4,
   SUBSCRIBE: 7,
+  UNSUBSCRIBE: 8,
   GET_FAIL: 9,
   SET_FAIL: 10,
   SUB_ACCEPT: 12,
@@ -32,6 +33,10 @@ export const DMP = Object.freeze({
 
 // DMP header byte for a single absolute four-byte address.
 const ADDR_HEADER = 0x02;
+// DMP header byte for a PDU that carries no address, as the commit PDU does.
+const NO_ADDR_HEADER = 0x00;
+// DMP header byte for a PDU addressed by a string key, as the RF scan's are.
+export const STRING_HEADER = 0x07;
 
 // Appended to every SET so the device answers it (see Ad4qDevice.set).
 export const COMMIT_PDU = Buffer.from([0x70, 0x05, 0x01, 0x00, 0x00]);
@@ -145,6 +150,12 @@ export function buildJoinAccept(srcCid, leaderCid, leaderChan, relSeq, ourChan, 
   return rootWrap(srcCid, pduEncode(SDT.JOIN_ACCEPT, null, data));
 }
 
+/** The unit's notice that it is ending the session (a reboot, for one). The driver reads only the vector. */
+export function buildLeaving(srcCid, leaderCid, leaderChan, mid = 1, reason = 1) {
+  const data = Buffer.concat([leaderCid, u16(leaderChan), u16(mid), u32(0), Buffer.from([reason])]);
+  return rootWrap(srcCid, pduEncode(SDT.LEAVING, null, data));
+}
+
 /** A client block: a payload for one association, tagged with its protocol. */
 export function clientBlock(mid, proto, assoc, payload) {
   const body = Buffer.concat([u16(mid), u32(proto), u16(assoc), payload]);
@@ -154,6 +165,8 @@ export function clientBlock(mid, proto, assoc, payload) {
 
 const WRAP_TRAILER_DEFAULT = Buffer.from([0xff, 0xff, 0xff, 0xff, 0x00, 0x00]);
 export const WRAP_TRAILER_FIRST = Buffer.from([0xff, 0xff, 0x00, 0x00, 0x00, 0x00]);
+/** Sent on an unreliable wrapper to ask the receiver to acknowledge what it has received. */
+export const WRAP_TRAILER_ACK_REQUEST = Buffer.from([0x00, 0x01, 0x00, 0x01, 0x00, 0x00]);
 
 /** An SDT wrapper carrying client blocks, reliable or not. */
 export function buildWrapper(
@@ -225,36 +238,70 @@ export function dmpBatch(vector, addrs) {
 }
 
 /**
+ * One vector over several string-keyed properties (the RF scan's): the first
+ * PDU carries the vector and header, each further key is a continuation PDU
+ * that inherits them. A key is a two-byte length that counts itself, then ASCII.
+ */
+export function strBatch(vector, entries) {
+  return Buffer.concat(
+    entries.map(({ key, value = Buffer.alloc(0) }, i) => {
+      const name = Buffer.from(key, 'latin1');
+      const data = Buffer.concat([u16(2 + name.length), name, value]);
+      const total = (i === 0 ? 4 : 2) + data.length;
+      if (total > 0x0fff) throw new RangeError('PDU too long for a 12-bit length');
+      const lead = [(i === 0 ? 0x70 : 0x10) | (total >> 8), total & 0xff];
+      return Buffer.concat([Buffer.from(i === 0 ? [...lead, vector, STRING_HEADER] : lead), data]);
+    })
+  );
+}
+
+/**
  * Every `{ vector, addr, value }` in a DMP payload. A PDU that carries a
- * vector and header sets the vector for the continuation PDUs after it, which
- * carry only an address and a value.
+ * vector and header sets both for the continuation PDUs after it, which carry
+ * only an address (or key) and a value. A string-keyed PDU has `addr: null` and
+ * a `key`; a reply that names neither has `addr: null` and no `key`.
  */
 export function parseDmp(payload) {
   const out = [];
   let vector = null;
+  let header = null;
   let offset = 0;
+  const stringEntry = (at, end) => {
+    if (end - at < 2) return null;
+    const keyLength = payload.readUInt16BE(at);
+    if (keyLength < 2 || at + keyLength > end) return null;
+    return {
+      vector,
+      addr: null,
+      key: payload.toString('latin1', at + 2, at + keyLength),
+      value: payload.subarray(at + keyLength, end),
+    };
+  };
   while (offset + 1 < payload.length) {
     const lead = payload[offset] & 0xf0;
     if (lead !== 0x70 && lead !== 0x10) break;
     const length = ((payload[offset] & 0x0f) << 8) | payload[offset + 1];
     if (length < 2 || offset + length > payload.length) break;
+    const end = offset + length;
     if (lead === 0x70) {
       if (length >= 4) {
         vector = payload[offset + 2];
-        if (payload[offset + 3] === ADDR_HEADER && length >= 8) {
-          out.push({
-            vector,
-            addr: payload.readUInt32BE(offset + 4),
-            value: payload.subarray(offset + 8, offset + length),
-          });
+        header = payload[offset + 3];
+        if (header === ADDR_HEADER && length >= 8) {
+          out.push({ vector, addr: payload.readUInt32BE(offset + 4), value: payload.subarray(offset + 8, end) });
+        } else if (header === NO_ADDR_HEADER && length >= 6) {
+          // a reply that names no address: an AD4D answers a committed SET this way
+          out.push({ vector, addr: null, value: payload.subarray(offset + 4, end) });
+        } else if (header === STRING_HEADER && length >= 6) {
+          const entry = stringEntry(offset + 4, end);
+          if (entry) out.push(entry);
         }
       }
+    } else if (header === STRING_HEADER) {
+      const entry = stringEntry(offset + 2, end);
+      if (entry) out.push(entry);
     } else if (length >= 6) {
-      out.push({
-        vector,
-        addr: payload.readUInt32BE(offset + 2),
-        value: payload.subarray(offset + 6, offset + length),
-      });
+      out.push({ vector, addr: payload.readUInt32BE(offset + 2), value: payload.subarray(offset + 6, end) });
     }
     offset += length;
   }
