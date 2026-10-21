@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.DS_Store
 
 # frozen language runtimes assembled per target — large, binary, never committed
 runtime/
