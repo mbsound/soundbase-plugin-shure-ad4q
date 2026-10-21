@@ -27,9 +27,12 @@ driver/
   acn/pdu.js            ACN root/SDT/DMP codec
   acn/slp.js            SLP: unit adverts, SrvRqst, this controller's advert
   acn/session.js        AcnSession: join, acks, NAK retransmit, paced sends
+  cmdstrings/client.js  Shure's documented TCP 2202 protocol: transmitter, slots/ShowLink, status flags
   ad4q/properties.js    the address map and value codecs
-  ad4q/device.js        Ad4qDevice: typed reads/writes with read-back
+  ad4q/device.js        Ad4qDevice: typed reads/writes with read-back, and scan()
+  ad4q/scan.js          the RF scan: keys, planning on the unit's own range, sample decoding
   fake/fake-ad4q.js     FakeAd4q: the same wire, no hardware; also the in-app simulator
+  fake/fake-commands.js FakeCommandServer: the simulator's TCP 2202 side
 __tests__/              byte pins, driver vs fake, adapter via the real shell
 scripts/ad4q.mjs        the command-line tool for a real unit
 docs/                   the plugin template's guide set
@@ -41,10 +44,13 @@ docs/                   the plugin template's guide set
   driver is built from lives outside every git repo, on purpose. Source code and
   its short comments are fine; findings documents, captures and address-by-address
   write-ups are not. Do not add them, and do not paste their contents into docs.
-- **Disruptive settings stay read-only.** HD mode, encryption, antenna bias and
-  the band are reported and refused as writes (`read_only`). Changing that is a
-  product decision, not a refactor. The IR preset's RF power, the talk-switch
-  routing and roster unlinking were made writable deliberately.
+- **Every setting the unit accepts over the network is writable, by decision.**
+  HD mode restarts the unit about 18 s after the write, and the adapter rides that
+  out (`#expectRestart` / `#reconnect`) instead of reporting a fault; the band
+  retunes the channels and moves the scan limits; encryption changes the key the
+  channel's transmitters need. Quadversity is refused because the receiver itself
+  refuses it over the network, and the band stays read-only on a range whose band
+  list is not known (`BANDS_BY_RANGE`).
 - **The talk routing shares one byte.** Writing one output reads the byte first
   and changes only its bit (`Ad4qDevice.setTalkOutput`); never write the byte whole.
 - **Channel state merges, so "nothing" must be published.** A key left out of a
@@ -58,6 +64,17 @@ docs/                   the plugin template's guide set
 - **The state the layout binds to is the state the adapter emits.** A test checks
   that every `x.shure-ad4q.*` key is declared and that the layout reads only keys
   the adapter provides.
+- **One unit is one device, with two adapters.** Each product declares channel
+  monitoring and `spectrumAnalyzer`, so the shell opens a monitoring adapter and
+  a spectrum adapter on the same `net:<ip>` device; each holds its own session
+  to the unit, as Wireless Workbench and this plugin do side by side.
+- **Never UNSUBSCRIBE the RF_SCAN keys, and read the claim before every scan.**
+  An unsubscribe makes a real unit silently ignore every later scan in the
+  session; the claim (`Ad4qDevice.scan` reads `0x0n00090f`) is spent by each
+  scan. Both are modelled by `FakeAd4q`, so a regression fails the driver tests.
+- **A scan's geometry comes from the unit.** Range, raster and index origin are
+  read (`scanLimits()`), never assumed from the model letter; that is what makes
+  a B- or C-range receiver scan correctly.
 
 
 ## Invariants — do not violate these without being asked

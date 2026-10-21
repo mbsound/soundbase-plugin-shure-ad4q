@@ -1,15 +1,18 @@
 # Shure AD4Q for SoundBase
 
 A [SoundBase](https://soundbase.app) plugin that puts a Shure **AD4Q**
-four-channel Axient Digital receiver into SoundBase's device monitoring, over
-the network, with no Wireless Workbench in between: each channel's name,
-frequency, gain, mute, tone generator and diversity on a card, with the
-settings that are safe to change writable from SoundBase.
+four-channel or **AD4D** two-channel Axient Digital receiver into SoundBase,
+over the network, with no Wireless Workbench in between. In device monitoring:
+each channel's name, frequency, gain, mute, tone generator and diversity on a
+card, with the settings that are safe to change writable from SoundBase. In the
+spectrum analyzer: the receiver's own RF scan, from the channel and antenna you
+choose.
 
-> **Status: not yet run against a real AD4Q.** The driver is tested against a
-> simulated unit that speaks the same wire protocol, and the protocol layer is
-> pinned to bytes captured from real traffic. [First hour with
-> hardware](#first-hour-with-hardware) lists what to check first.
+> **Status: run against a real AD4D-A** (monitoring, writes and the RF scan).
+> A real AD4Q has not been tried; the driver treats it as the same unit with
+> four channels, and the protocol layer is pinned to bytes captured from real
+> traffic. [First hour with hardware](#first-hour-with-hardware) lists what to
+> check first.
 
 ## Requirements
 
@@ -29,6 +32,7 @@ settings that are safe to change writable from SoundBase.
 | Mute | channel card | yes |
 | Tone generator level | channel card | yes (Off, or -60 to -12 dB in 6 dB steps) |
 | Tone generator frequency | list view | yes (Hz) |
+| Tone generator quick toggle | channel settings | yes: one switch, on = -30 dB, off = off. Hidden by the "Quick toggles" plugin setting |
 | Diversity mode | channel card | yes (Off, Selection, Combining) |
 | Overload hold | list view | yes |
 | Interference avoidance | list view | yes (Off, Manual, Automatic) |
@@ -37,7 +41,12 @@ settings that are safe to change writable from SoundBase.
 | Talk-switch routing: XLR, TRS, AES3 and Dante, for each switch position | device settings | yes (one switch per output) |
 | Unlink a registered transmitter | device settings | yes (pick a slot; it returns to None) |
 | Unit name | device settings | yes |
+| Encryption | device settings | yes (Off/On), one setting for the whole unit; the transmitters need an IR sync afterwards |
+| Antenna bias | device settings | yes |
+| Require Showlink For Frequency | device settings | built and tested but hidden until SoundBase can push frequencies to a plugin device (see Known limits); `SB_AD4Q_SHOWLINK_LOCK=1` offers it. While on, every frequency change through the plugin is refused on a channel whose transmitter has no ShowLink |
 | Fan mode, power-switch lock, front-panel lock | device settings | yes |
+| HD mode | device settings | yes; the receiver restarts itself (about 30 s off the air) and unpairs its transmitters, which need an IR sync again. The plugin reconnects on its own |
+| Quadversity | device settings | no: the receiver refuses it over the network, so it is shown only |
 | RF level | channel meter | read-only |
 | Paired transmitter: model, battery | channel card, list view | read-only |
 | Last transmitter synced to the channel | list view | read-only |
@@ -59,6 +68,27 @@ next IR sync, not a live transmit power.
 Out-of-range values are snapped to what the unit accepts, and what the unit
 reports back is what SoundBase shows. Changes made on the unit's front panel or
 in Workbench appear in SoundBase as they happen.
+
+### The transmitter, ShowLink and the unit's alarms
+
+Beside its control session the plugin also opens Shure's documented control port (TCP 2202, the
+"command strings" protocol) and keeps it open. From there it shows the transmitter being received on
+each channel (model, name, battery with runtime, power, audio state, talk switch), whether a
+registered ADX transmitter is online over **ShowLink** and how good that link is, and the unit's own
+alarms (interference, an unregistered transmitter, an encryption mismatch) as device notices. If
+that port does not answer, monitoring still works without those details.
+
+### The RF scan
+
+The same unit is also a spectrum-analyzer source in the plot's Live Scan
+picker. Starting a sweep takes **one scan** from the chosen channel
+and antenna and then holds the result; start again for a fresh one. With
+**A + B** it scans each antenna in turn and shows the stronger of the two at
+every point, with each antenna's own curve overlaid. A scan covers the unit's
+whole range by default (about two minutes per antenna at 25 kHz steps) or the
+span you set, snapped to the unit's raster. The range, raster and index origin
+are read from the unit, so a 470, 606 or 750 MHz model each scans its own band.
+Audio is not interrupted by a scan.
 
 ## Using it
 
@@ -132,6 +162,15 @@ The guide set the plugin template ships is in [docs/](docs/README.md), and
 [CLAUDE.md](CLAUDE.md) is the short version of the plugin model.
 
 ## Known limits
+
+- **SoundBase cannot yet push coordinated frequencies to a plugin device** (SoundBase Desktop as of
+  October 2026). Frequencies link to the plugin's channels, but the push option never appears: the
+  plot's push logic only offers devices whose record has `sessionStarted`, a flag SoundBase sets from a
+  `communicationStarted` event it raises for its first-party device sessions only; plugin devices arrive
+  through `DeviceManagerService.applyExternalState`, which never raises it, and the contract gives a
+  plugin no way to set the flag. Reported to SoundBase. Until it is fixed, a frequency change from the
+  coordination view has to go through SoundBase's own Shure AD4 integration, which talks to the unit
+  directly and so bypasses this plugin's "Require Showlink For Frequency" lock.
 
 - macOS only for now; the code has not been run elsewhere.
 - One controller per unit is the safe assumption: running this beside Wireless
