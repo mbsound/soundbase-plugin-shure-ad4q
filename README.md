@@ -161,6 +161,20 @@ unit; `SB_AD4Q_NO_DISCOVERY=1` turns off network discovery (the tests use it).
 The guide set the plugin template ships is in [docs/](docs/README.md), and
 [CLAUDE.md](CLAUDE.md) is the short version of the plugin model.
 
+### If a scan stalls
+
+A scan that starts and then receives nothing is reported within about 20 s as
+"the scan stalled: …" with what the plugin saw: the unit's scan status, how many
+points arrived, and whether samples arrived under a curve index other than the
+one asked for (those are used automatically, and logged). The plugin log
+(SoundBase's plugin manager, or `pluginLogs/shure-ad4q.log`) carries the same
+milestones for every scan: claimed, status changes, first samples, complete.
+
+All scan testing was on an AD4D-A. If an AD4Q stalls, send that log together
+with the unit's firmware, band and Quadversity setting; `AD4Q_DEBUG=1` in the
+plugin's environment logs every packet, which is enough to find the difference
+without a Workbench capture.
+
 ## Known limits
 
 - **SoundBase cannot yet push coordinated frequencies to a plugin device** (SoundBase Desktop as of
