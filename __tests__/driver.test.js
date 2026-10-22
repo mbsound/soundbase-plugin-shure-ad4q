@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import dgram from 'node:dgram';
-import { Ad4qDevice, ScanAborted, WriteRefused } from '../driver/ad4q/device.js';
+import { Ad4qDevice, ScanAborted, ScanFailed, WriteRefused } from '../driver/ad4q/device.js';
 import { SlpBrowser } from '../driver/acn/slp.js';
 import { AcnSession } from '../driver/acn/session.js';
 import { FakeAd4q } from '../driver/fake/fake-ad4q.js';
@@ -435,4 +435,27 @@ test('a second scan on the same session cannot start while one is running', asyn
   const first = device.scan({ channel: 1, antenna: 'A', plan });
   await assert.rejects(() => device.scan({ channel: 1, antenna: 'B', plan }), /already running/);
   assert.equal((await first).length, plan.points);
+});
+
+test('samples a unit streams under another curve index are used, and the oddity is logged', async (t) => {
+  // an AD4Q has not been seen on hardware; if it names antenna A's curve differently, the scan must still complete
+  const logs = [];
+  const { fake, device } = await connected(t, { channels: 4, log: (l, m) => logs.push(`${l} ${m}`) }, { model: 'AD4Q', scanQuirks: { curveOffset: 2 } });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 505_000, stopKhz: 510_000 });
+  const a = await device.scan({ channel: 3, antenna: 'A', plan });
+  assert.deepEqual(a, expectedLevels(fake, plan, 'A'));
+  assert.ok(logs.some((l) => /curve 3, not 1; using them/.test(l)), `expected the adoption to be logged, saw:\n${logs.join('\n')}`);
+  assert.ok(logs.some((l) => /scan: channel 3 complete, 201 points/.test(l)));
+});
+
+test('a unit that starts a scan and streams nothing fails fast, saying what was seen', async (t) => {
+  const { device } = await connected(t, { channels: 4, scanStallMs: 400 }, { model: 'AD4Q', scanQuirks: { silent: true } });
+  const limits = await device.scanLimits();
+  const plan = planScan({ limits, startKhz: 505_000, stopKhz: 510_000 });
+  const started = Date.now();
+  await assert.rejects(device.scan({ channel: 4, antenna: 'B', plan }), (err) => err instanceof ScanFailed && /stalled: status ACTIVE, 0 of 201 points received/.test(err.message) && /AD4Q_DEBUG/.test(err.message));
+  assert.ok(Date.now() - started < 4000, 'fails within seconds, not after the full scan timeout');
+  // and the unit is released: the next scan on the session runs
+  device.scanning = false;
 });

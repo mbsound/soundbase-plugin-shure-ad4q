@@ -119,7 +119,7 @@ export class Ad4qDevice extends EventEmitter {
    *   host: string, port?: number, cid?: string|null,
    *   browser?: { find(ip: string, ms: number): Promise<object|null> },
    *   localIp?: string, advert?: boolean, timings?: object,
-   *   requestTimeoutMs?: number, log?: (level: string, message: string) => void,
+   *   requestTimeoutMs?: number, scanStallMs?: number, log?: (level: string, message: string) => void,
    * }} options
    */
   constructor({
@@ -134,6 +134,7 @@ export class Ad4qDevice extends EventEmitter {
     channels = null,
     controllerCid = null,
     log = () => {},
+    scanStallMs = 20_000,
   }) {
     super();
     // an AD4D has two channels; asking it for four leaves reads that are never answered
@@ -149,6 +150,8 @@ export class Ad4qDevice extends EventEmitter {
     this.timings = timings;
     this.requestTimeoutMs = requestTimeoutMs;
     this.log = log;
+    // how long a triggered scan may go without a sample before it is called stalled
+    this.scanStallMs = scanStallMs;
     this.session = null;
     this.pending = new Map(); // addr -> [{ kind, resolve, reject, timer }]
     this.values = new Map(); // addr -> Buffer, the last value heard
@@ -401,7 +404,8 @@ export class Ad4qDevice extends EventEmitter {
     this.scanning = true;
     const ch = channel - 1;
     const keys = statusKeys(ch);
-    const data = dataKey(ch, ANTENNAS[antenna].curve, plan.loIndex, plan.hiIndex);
+    const curve = ANTENNAS[antenna].curve;
+    const data = dataKey(ch, curve, plan.loIndex, plan.hiIndex);
 
     const levels = new Array(plan.points).fill(NaN);
     const refused = new Set();
@@ -410,24 +414,55 @@ export class Ad4qDevice extends EventEmitter {
     let status = null;
     let sawActive = false;
     let triggered = false;
+    let triggeredAt = 0;
+    let lastChunkAt = 0;
+    // the curve the samples are taken from: what was asked for, unless the unit names it differently
+    let usingCurve = curve;
+    const heldBack = new Map(); // curve -> chunks seen on a curve that was not asked for
+    const statusName = (v) => Object.keys(SCAN_STATUS).find((k) => SCAN_STATUS[k] === v) ?? (v == null ? 'unknown' : `#${v}`);
+    const take = (chunk) => {
+      if (received === 0) this.log('info', `scan: first samples on channel ${channel} (curve ${chunk.curve}, index ${chunk.lo}-${chunk.hi})`);
+      chunk.dbm.forEach((dbm, i) => {
+        const at = chunk.lo + i - plan.loIndex;
+        if (at < 0 || at >= plan.points) strays += 1;
+        else {
+          if (Number.isNaN(levels[at])) received += 1;
+          levels[at] = dbm;
+        }
+      });
+      onProgress?.(received / plan.points);
+    };
+    /** What the scan has seen so far, for a failure message that can be acted on without a capture. */
+    const summary = () => {
+      const others = [...heldBack].map(([c, chunks]) => `${chunks.length} chunks on curve ${c}`).join(', ');
+      return `status ${statusName(status)}${sawActive ? '' : ' (never active)'}, ${received} of ${plan.points} points received` +
+        `${others ? `, ${others} ignored` : ''}${strays ? `, ${strays} stray samples` : ''}${refused.size ? `, refused: ${[...refused].join(', ')}` : ''}`;
+    };
     const onString = ({ vector, key, value }) => {
       if (vector === DMP.SET_FAIL) refused.add(`${key.replace(/^.*RF_SCAN:/, '').replace(/\/CH=.*/, '')} reason ${value[0]}`);
       else if (vector === DMP.SUB_REJECT) refused.add(`subscription ${key.replace(/^.*RF_SCAN[_A-Z]*:/, '').slice(0, 24)} rejected`);
       else if (key === keys.status && value.length) {
+        if (value[0] !== status) this.log('info', `scan: channel ${channel} status ${statusName(value[0])}`);
         status = value[0];
         if (status === SCAN_STATUS.ACTIVE) sawActive = true;
       } else if (vector === DMP.EVENT && key.includes('RF_SCAN_DATA')) {
         const chunk = parseDataEvent(key, value);
-        if (!chunk || chunk.curve !== ANTENNAS[antenna].curve) return;
-        chunk.dbm.forEach((dbm, i) => {
-          const at = chunk.lo + i - plan.loIndex;
-          if (at < 0 || at >= plan.points) strays += 1;
-          else {
-            if (Number.isNaN(levels[at])) received += 1;
-            levels[at] = dbm;
+        if (!chunk) return;
+        lastChunkAt = Date.now();
+        if (chunk.curve !== usingCurve) {
+          const held = heldBack.get(chunk.curve) ?? [];
+          held.push(chunk);
+          heldBack.set(chunk.curve, held);
+          // nothing on the curve asked for while this one keeps coming: it is the unit's name for that antenna
+          if (received === 0 && held.length >= 3) {
+            this.log('warn', `scan: the unit streams antenna ${antenna}'s samples as curve ${chunk.curve}, not ${usingCurve}; using them`);
+            usingCurve = chunk.curve;
+            heldBack.delete(chunk.curve);
+            for (const c of held) take(c);
           }
-        });
-        onProgress?.(received / plan.points);
+          return;
+        }
+        take(chunk);
       }
     };
     this.on('string', onString);
@@ -435,6 +470,7 @@ export class Ad4qDevice extends EventEmitter {
     try {
       // the read that claims a scan; it is spent by the scan, so it is made before every one
       await this.get(chanAddr(channel, SCAN_OBJ.CLAIM));
+      this.log('info', `scan: channel ${channel} claimed; antenna ${antenna} (curve ${curve}), ${plan.points} points ${plan.startKhz}-${plan.stopKhz} kHz`);
       // Wireless Workbench's order: status subscriptions, configuration, data subscription, trigger.
       // The unit sends no "accepted" reply to these that this driver sees, yet streams once they are in.
       await this.session.send(strBatch(DMP.SUBSCRIBE, [keys.progress, keys.sweepId, keys.status].map((key) => ({ key }))));
@@ -442,6 +478,7 @@ export class Ad4qDevice extends EventEmitter {
       await this.session.send(strBatch(DMP.SUBSCRIBE, [{ key: data }]));
       await this.session.send(dmpPdu(DMP.SET, chanAddr(channel, SCAN_OBJ.START), Buffer.from([0])));
       triggered = true;
+      triggeredAt = Date.now();
       await waitFor(
         () => {
           if (refused.size) {
@@ -453,12 +490,17 @@ export class Ad4qDevice extends EventEmitter {
                 : `the unit refused the scan (${[...refused].join(', ')})`
             );
           }
+          // no samples for a while after the trigger (or after the last chunk): say what was seen, now
+          if (Date.now() - Math.max(triggeredAt, lastChunkAt) > this.scanStallMs && received < plan.points) {
+            throw new ScanFailed(`the scan stalled: ${summary()}. If this is an AD4Q, send the plugin log with the unit's firmware, band and Quadversity setting (AD4Q_DEBUG=1 in the environment logs every packet).`);
+          }
           return received >= plan.points;
         },
         this.scanTimeoutMs ?? scanDurationMs(plan.points) * 1.6 + 20_000,
         { signal, what: 'finish the scan' }
       );
       if (strays > 0) throw new ScanFailed(`the unit sent ${strays} samples outside the range that was asked for`);
+      this.log('info', `scan: channel ${channel} complete, ${received} points`);
       // a short wait for the unit to say it is done, as it does after the last chunk
       await waitFor(idle, 5000, { signal, what: 'report the scan finished' }).catch((err) => {
         if (err instanceof ScanAborted) throw err;

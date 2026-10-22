@@ -85,12 +85,15 @@ export class FakeAd4q {
     model = 'AD4Q',
     echoSets = model !== 'AD4D',
     scan = {},
+    scanQuirks = {},
     scanChunkMs = 1,
     restartMs = 400,
   } = {}) {
     this.model = model;
     this.echoSets = echoSets;
     this.scanGeometry = { originKhz: 470_000, startKhz: 470_125, stopKhz: 607_875, stepKhz: 25, ...scan };
+    // ways a unit this fake has not met might behave: samples under another curve index, or none at all
+    this.scanQuirks = { curveOffset: 0, silent: false, ...scanQuirks };
     this.scanChunkMs = scanChunkMs;
     /** how long the unit is off the network after a change that restarts it (HD mode) */
     this.restartMs = restartMs;
@@ -515,6 +518,7 @@ export class FakeAd4q {
     const lo = Math.round((startKhz - this.scanGeometry.originKhz) / stepKhz);
     const hi = Math.round((stopKhz - this.scanGeometry.originKhz) / stepKhz);
     this.scans.push({ channel, antenna, startKhz, stopKhz });
+    state.channel = ch;
     this.#setScanStatus(ch, SCAN_STATUS.ACTIVE);
     this.#pushScan(statusKeys(ch).sweepId, u32(0));
     this.#pushScan(statusKeys(ch).progress, u8(0));
@@ -525,6 +529,7 @@ export class FakeAd4q {
         this.#finishScan(ch);
         return;
       }
+      if (this.scanQuirks.silent) return; // started, and then nothing
       const end = Math.min(next + 15, hi);
       const count = end - next + 1;
       const body = Buffer.alloc(7 + count * 2);
@@ -535,7 +540,7 @@ export class FakeAd4q {
         const khz = this.scanGeometry.originKhz + (next + i) * stepKhz;
         body.writeInt16BE(Math.round(this.scanLevelDbm(khz, antenna) * 10), 7 + i * 2);
       }
-      this.#pushScan(dataKey(ch, ANTENNAS[antenna].curve, next, end), body);
+      this.#pushScan(dataKey(ch, ANTENNAS[antenna].curve + this.scanQuirks.curveOffset, next, end), body);
       next = end + 1;
       const percent = Math.floor(((next - lo) / (hi - lo + 1)) * 20) * 5;
       if (percent > lastPercent) {
@@ -562,7 +567,8 @@ export class FakeAd4q {
     clearInterval(state.timer);
     state.timer = null;
     state.status = SCAN_STATUS.IDLE;
-    if (running && !quiet) this.#pushScan(statusKeys(0).status, u8(SCAN_STATUS.IDLE));
+    // the unit reports idle on the channel that was scanning, not on channel 1
+    if (running && !quiet) this.#pushScan(statusKeys(state.channel ?? 0).status, u8(SCAN_STATUS.IDLE));
   }
 
   /** The unit restarts: it says goodbye, drops off the network for a while, then takes a fresh join with its settings kept. */
