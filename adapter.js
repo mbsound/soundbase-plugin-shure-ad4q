@@ -523,10 +523,13 @@ class Ad4qMonitoringAdapter {
     this.onFatal?.(err);
   }
 
-  /** One condition shown on the device, replaced by id; `null` clears it. */
+  /** One condition shown on the device, replaced by id; `null` clears it. The host hears only changes. */
   #setCondition(id, warning) {
+    const before = this.conditions.get(id);
     if (warning) this.conditions.set(id, { id, ...warning });
     else this.conditions.delete(id);
+    const after = this.conditions.get(id);
+    if (JSON.stringify(before) === JSON.stringify(after)) return;
     this.onWarnings?.([...this.conditions.values()]);
   }
 
