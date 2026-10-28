@@ -20,7 +20,7 @@ export function parseReport(frame) {
   if (!tokens.length) return null;
   if (tokens[0] === 'ERR') return { channel: null, prop: 'ERR', args: [] };
   let channel = null;
-  if (typeof tokens[0] === 'string' && /^\d$/.test(tokens[0])) channel = Number(tokens.shift());
+  if (typeof tokens[0] === 'string' && /^\d{1,2}$/.test(tokens[0])) channel = Number(tokens.shift());
   const prop = tokens.shift();
   if (typeof prop !== 'string') return null;
   const args = tokens.map((x) => (typeof x === 'string' ? x : x.braced.trimEnd()));

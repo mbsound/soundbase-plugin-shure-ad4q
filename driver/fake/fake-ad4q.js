@@ -88,8 +88,11 @@ export class FakeAd4q {
     scanQuirks = {},
     scanChunkMs = 1,
     restartMs = 400,
+    channels = null,
   } = {}) {
     this.model = model;
+    /** an ANX4 fake advertises its Axient Digital module and has the channels it is "licensed" for (16 by default) */
+    this.anx4 = model === 'ANX4';
     this.echoSets = echoSets;
     this.scanGeometry = { originKhz: 470_000, startKhz: 470_125, stopKhz: 607_875, stepKhz: 25, ...scan };
     // ways a unit this fake has not met might behave: samples under another curve index, or none at all
@@ -104,7 +107,7 @@ export class FakeAd4q {
     this.scanState = { claimed: false, poisoned: false, config: new Map(), subscriptions: new Set(), status: SCAN_STATUS.IDLE, timer: null, owner: null };
     /** every scan the unit has run, `{ channel, antenna, startKhz, stopKhz }`, for tests */
     this.scans = [];
-    this.channels = channelsFor(model);
+    this.channels = channels ?? (this.anx4 ? 16 : channelsFor(model));
     this.host = host;
     this.uacn = uacn ?? `${model} (simulated)`;
     this.slpTarget = slpPort;
@@ -113,7 +116,7 @@ export class FakeAd4q {
     this.socket = null;
     this.adverts = null;
     /** the command-strings (TCP 2202) side of the unit, started with `listen()` */
-    this.commands = new FakeCommandServer({ channels: this.channels, model: `${model}-A`, host });
+    this.commands = new FakeCommandServer({ channels: this.channels, model: this.anx4 ? model : `${model}-A`, host });
     /** every controller in a session with the unit, by `ip:port`: { cid, chan, rinfo, totalSeq, relSeq, firstRel, declared, subscribed } */
     this.controllers = new Map();
     this.timers = [];
@@ -146,24 +149,35 @@ export class FakeAd4q {
       const n = v.length === 1 ? v.readInt8(0) : v.length === 2 ? v.readUInt16BE(0) : v.readUInt32BE(0);
       return n >= lo && n <= hi;
     };
-    put(DEV.MODEL, encodeString(`${this.model}-A`));
+    put(DEV.MODEL, encodeString(this.anx4 ? this.model : `${this.model}-A`));
     put(DEV.SERIAL, encodeString('SIM000001'));
     put(DEV.NAME, encodeString(this.uacn.slice(0, 31)), (v) => v.length >= 2);
     put(DEV.POWER_LOCK, u8(0), inSet(0, 1));
     put(DEV.FAN_ALWAYS_ON, u8(0), inSet(0, 1));
     put(DEV.PANEL_LOCK, u8(0), inSet(0, 1));
-    put(DEV.BAND, encodeString('G57'), (v) => ['G53', 'G54', 'G55', 'G56', 'G57', 'G57+', 'G62', 'G63', 'H54'].includes(v.subarray(2).toString('ascii')));
+    if (!this.anx4) put(DEV.BAND, encodeString('G57'), (v) => ['G53', 'G54', 'G55', 'G56', 'G57', 'G57+', 'G62', 'G63', 'H54'].includes(v.subarray(2).toString('ascii')));
     put(DEV.HD_MODE, u8(0), inSet(0, 1));
-    put(DEV.QUADVERSITY, u8(0));
-    put(DEV.ANTENNA_BIAS, u8(0), inSet(0, 1));
+    if (!this.anx4) {
+      put(DEV.QUADVERSITY, u8(0));
+      put(DEV.ANTENNA_BIAS, u8(0), inSet(0, 1));
+    } else {
+      // the ANX4 as read 2026-10-28: four named antennas, no unit band, no scan range
+      put(DEV.ANTENNA_A, encodeString('Antenna A'));
+      put(DEV.ANTENNA_B, encodeString('Antenna B'));
+      put(DEV.ANTENNA_C, encodeString('Antenna C'));
+      put(DEV.ANTENNA_D, encodeString('Antenna D'));
+    }
     const g = this.scanGeometry;
-    put(SCAN_LIMITS.START, u32(g.startKhz));
-    put(SCAN_LIMITS.STOP, u32(g.stopKhz));
+    if (!this.anx4) {
+      put(SCAN_LIMITS.START, u32(g.startKhz));
+      put(SCAN_LIMITS.STOP, u32(g.stopKhz));
+    }
     put(SCAN_LIMITS.ORIGIN, u32(g.originKhz));
     put(SCAN_LIMITS.STEP, u32(g.stepKhz));
     for (let c = 1; c <= this.channels; c += 1) {
       const at = (obj) => chanAddr(c, obj);
-      put(at(CH.NAME), encodeString(`Channel${c}`), (v) => v.length >= 2 && v.readUInt16BE(0) <= 10);
+      put(at(CH.NAME), encodeString(this.anx4 ? `Ch.${String(c).padStart(2, '0')}` : `Channel${c}`), (v) => v.length >= 2 && v.readUInt16BE(0) <= 10);
+      if (this.anx4) put(at(CH.BAND), encodeString('G57+'));
       put(at(CH.GAIN_DB), u8(0), range(-18, 42));
       put(at(CH.MUTE), u8(0), inSet(0, 1));
       put(at(CH.OVERLOAD_HOLD), u8(0), inSet(0, 1));
@@ -189,8 +203,10 @@ export class FakeAd4q {
       put(at(CH.RF_LEVEL_B), i16(-920));
       put(at(CH.AUDIO_LEVEL), i32(-115));
       put(at(SCAN_OBJ.CLAIM), u8(0));
-      put(at(SCAN_OBJ.START), u8(0));
-      put(at(SCAN_OBJ.RELEASE), u8(0));
+      if (!this.anx4) {
+        put(at(SCAN_OBJ.START), u8(0));
+        put(at(SCAN_OBJ.RELEASE), u8(0));
+      }
     }
   }
 
@@ -262,7 +278,7 @@ export class FakeAd4q {
       this.adverts?.send(
         buildAttrRply({
           cid: this.cid,
-          fctn: `${this.model}_RX`,
+          fctn: this.anx4 ? 'MCR_AD' : `${this.model}_RX`,
           uacn: this.uacn,
           ip: this.host,
           port: this.controlPort,

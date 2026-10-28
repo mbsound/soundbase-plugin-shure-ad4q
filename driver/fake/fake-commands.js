@@ -60,7 +60,7 @@ export class FakeCommandServer {
   }
 
   #onFrame(socket, frame) {
-    const flash = /^<\s*SET\s+(?:(\d)\s+)?FLASH\s+(ON|OFF)\s*>$/.exec(frame);
+    const flash = /^<\s*SET\s+(?:(\d{1,2})\s+)?FLASH\s+(ON|OFF)\s*>$/.exec(frame);
     if (flash) {
       const channel = flash[1] === undefined ? null : Number(flash[1]);
       this.flashes.push(channel);
@@ -71,7 +71,7 @@ export class FakeCommandServer {
       t.unref?.();
       return;
     }
-    const rate = /^<\s*SET\s+(\d)\s+METER_RATE\s+(\d+)\s*>$/.exec(frame);
+    const rate = /^<\s*SET\s+(\d{1,2})\s+METER_RATE\s+(\d+)\s*>$/.exec(frame);
     if (rate) {
       const channel = Number(rate[1]);
       const ms = Number(rate[2]);
@@ -88,7 +88,7 @@ export class FakeCommandServer {
       }
       return;
     }
-    const m = /^<\s*GET\s+(?:(\d)\s+)?([A-Z_0-9]+)(?:\s+(\d))?\s*>$/.exec(frame);
+    const m = /^<\s*GET\s+(?:(\d{1,2})\s+)?([A-Z_0-9]+)(?:\s+(\d{1,2}))?\s*>$/.exec(frame);
     if (!m) return;
     const [, ch, prop, slot] = m;
     this.gets.push(frame);

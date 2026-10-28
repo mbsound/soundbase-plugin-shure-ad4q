@@ -21,6 +21,7 @@ import {
   KEYS,
   PRODUCT,
   PRODUCT_AD4D,
+  PRODUCT_ANX4,
   SIM_DEVICE_ID,
   createMonitoringAdapter,
   discoverDevices,
@@ -123,12 +124,26 @@ test('the product the adapter announces is declared in the manifest', () => {
 
 test('the AD4D is its own two-channel product, declared beside the AD4Q with the same layout', () => {
   const byId = Object.fromEntries(manifest.products.map((p) => [p.deviceTypeId, p]));
-  for (const p of manifest.products) assert.equal(p.capabilities.spectrumAnalyzer, true, `${p.deviceTypeId} is a scan source too`);
+  for (const p of manifest.products) assert.equal(p.capabilities.spectrumAnalyzer, /anx4-/.test(p.deviceTypeId) ? undefined : true, `${p.deviceTypeId}: the AD4Q and AD4D scan, the ANX4 not yet`);
   assert.equal(byId[PRODUCT].traits.channelCount, 4);
   assert.equal(byId[PRODUCT_AD4D].traits.channelCount, 2);
   assert.equal(byId[PRODUCT_AD4D].model.id, 'ad4d');
   assert.deepEqual(byId[PRODUCT_AD4D].layout, byId[PRODUCT].layout);
   assert.ok(PRODUCT_AD4D.startsWith(`plugin:${manifest.id}/`));
+});
+
+test('the ANX4 is a product per licensed channel count, 1 to 24, on the AD4Q tile with a band cell', () => {
+  const byId = Object.fromEntries(manifest.products.map((p) => [p.deviceTypeId, p]));
+  for (let n = 1; n <= 24; n += 1) {
+    const p = byId[PRODUCT_ANX4(n)];
+    assert.ok(p, `${PRODUCT_ANX4(n)} is declared`);
+    assert.equal(p.traits.channelCount, n);
+    assert.equal(p.model.id, 'ad4q', 'borrows the AD4Q tile');
+    assert.equal(p.model.name, 'ANX4');
+    assert.deepEqual(p.layout.channel.slice(0, -1), byId[PRODUCT].layout.channel, 'the AD4Q card plus one cell');
+    assert.deepEqual(p.layout.channel.at(-1), { type: 'value', bind: 'x.shure-ad4q.band', label: 'Band', format: 'text' });
+  }
+  assert.equal(manifest.products.length, 26);
 });
 
 test('the adapter sizes itself to the product it is given', () => {

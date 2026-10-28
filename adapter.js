@@ -45,7 +45,7 @@ import {
   mhzToKhz,
   quantizeKhz,
   toneLevelDb,
-} from './driver/ad4q/properties.js';
+  MAX_CHANNELS,} from './driver/ad4q/properties.js';
 import { SCAN_LIMITS, defaultSpan, peakOf, planScan, scanDurationMs } from './driver/ad4q/scan.js';
 import { SlpBrowser } from './driver/acn/slp.js';
 import { COMMAND_PORT, CommandClient, STATUS_PROPS, TX_PROPS, decodeShowLink, decodeTransmitter } from './driver/cmdstrings/client.js';
@@ -106,11 +106,22 @@ export function resetSettingsCache() {
 
 export const PRODUCT = 'plugin:shure-ad4q/ad4q';
 export const PRODUCT_AD4D = 'plugin:shure-ad4q/ad4d';
+/** The ANX4 is a product per licensed channel count (SoundBase fixes a device's channel count from its product). */
+export const PRODUCT_ANX4 = (channels) => `plugin:shure-ad4q/anx4-${channels}`;
+const ANX4_PRODUCT_RE = /\/anx4-(\d+)$/;
 
-/** The product a unit is announced as, from the function tag it advertises. */
-const productFor = (fctn) => (modelOf(fctn) === 'AD4D' ? PRODUCT_AD4D : PRODUCT);
+/** The product a unit is announced as, from the function tag it advertises; an ANX4 needs its channel count too. */
+const productFor = (fctn, channels = null) => {
+  const model = modelOf(fctn);
+  if (model === 'ANX4') return PRODUCT_ANX4(channels ?? MAX_CHANNELS);
+  return model === 'AD4D' ? PRODUCT_AD4D : PRODUCT;
+};
 /** The channel count of a product; anything not recognised is the four-channel AD4Q. */
-const channelsOfProduct = (product) => channelsFor(product === PRODUCT_AD4D ? 'AD4D' : 'AD4Q');
+const channelsOfProduct = (product) => {
+  const anx4 = ANX4_PRODUCT_RE.exec(String(product ?? ''));
+  if (anx4) return Math.min(MAX_CHANNELS, Math.max(1, Number(anx4[1])));
+  return channelsFor(product === PRODUCT_AD4D ? 'AD4D' : 'AD4Q');
+};
 export const NET_ID_PREFIX = 'net:';
 export const SIM_DEVICE_ID = 'sim:ad4q';
 
@@ -136,6 +147,8 @@ export const KEYS = Object.freeze({
   toneGen: ns('toneGen'),
   showLink: ns('showLink'),
   status: ns('status'),
+  // ANX4: the channel's own band
+  band: ns('band'),
 });
 
 const SLOT_OPTIONS = ['None', ...Array.from({ length: ROSTER_SLOTS }, (_, i) => `Slot ${i + 1}`)];
@@ -248,13 +261,38 @@ const idleCheck = () => {
   if (browser && Date.now() - lastDiscoverAt > BROWSE_IDLE_MS) browser.stop();
 };
 
-const discoveredDevice = (unit) => ({
+const discoveredDevice = (unit, channels = null) => ({
   id: `${NET_ID_PREFIX}${unit.ip}`,
-  name: `${unit.uacn || unit.fctn} (${unit.ip})`,
-  product: productFor(unit.fctn),
+  name: `${modelOf(unit.fctn) === 'ANX4' ? `ANX4 ${unit.uacn || ''}`.trim() : unit.uacn || unit.fctn} (${unit.ip})`,
+  product: productFor(unit.fctn, channels),
   transport: { kind: 'network', host: unit.ip, port: unit.port },
   config: { host: unit.ip },
 });
+
+// An ANX4's product is its licensed channel count, which only the unit knows: a short session
+// counts the channels once per unit and the answer is kept; until it is in, the unit is not listed.
+const anx4Channels = new Map(); // ip -> count, or a promise while counting
+async function countAnx4(unit) {
+  const probe = new Ad4qDevice({ host: unit.ip, cid: unit.cid, port: unit.port, channels: MAX_CHANNELS, log });
+  try {
+    await probe.connect();
+    return await probe.countChannels();
+  } finally {
+    await probe.close().catch(() => {});
+  }
+}
+function anx4ChannelsFor(unit) {
+  const known = anx4Channels.get(unit.ip);
+  if (typeof known === 'number') return known;
+  if (!known) {
+    const p = countAnx4(unit).then(
+      (n) => { anx4Channels.set(unit.ip, n); log('info', `${unit.ip}: ANX4 licensed for ${n} channel${n === 1 ? '' : 's'}`); return n; },
+      (err) => { anx4Channels.delete(unit.ip); log('warn', `${unit.ip}: could not count the ANX4's channels (${err.message}); will retry`); return null; }
+    );
+    anx4Channels.set(unit.ip, p);
+  }
+  return null;
+}
 
 
 /** What the SLP browse has heard from lately. Returns at once; polled about once a second. */
@@ -276,7 +314,12 @@ export async function discoverDevices(pluginConfig = {}) {
   if (env('SB_AD4Q_NO_DISCOVERY') === '1') return found;
   const b = ensureBrowser(pluginConfig);
   setTimeout(idleCheck, BROWSE_IDLE_MS + 1000).unref?.();
-  for (const unit of b.devices()) found.push(discoveredDevice(unit));
+  for (const unit of b.devices()) {
+    if (modelOf(unit.fctn) === 'ANX4') {
+      const n = anx4ChannelsFor(unit);
+      if (n !== null) found.push(discoveredDevice(unit, n));
+    } else found.push(discoveredDevice(unit));
+  }
   return found;
 }
 
@@ -313,6 +356,7 @@ export const BANDS_BY_RANGE = Object.freeze({
 /** `A`, `B` or `C` from a model such as `AD4D-A`, or null. */
 const rangeOf = (model) => /-([ABC])$/i.exec(String(model ?? '').trim())?.[1]?.toUpperCase() ?? null;
 const isAd4d = (model) => /^AD4D/i.test(String(model ?? ''));
+const isAnx4 = (model) => /^ANX4/i.test(String(model ?? ''));
 const fanModeOf = (alwaysOn) => (alwaysOn == null ? undefined : alwaysOn ? FAN_MODES[1] : FAN_MODES[0]);
 
 /** The properties a unit offers: a few depend on which unit it is. */
@@ -373,13 +417,15 @@ export const propertyDescriptors = ({ model, quickToggles = true } = {}) => {
     unitProp('fanMode', { type: 'enum', options: [...FAN_MODES] }),
     unitProp('powerLock', { type: 'boolean' }),
     unitProp('panelLock', { type: 'boolean' }),
-    // the band is a choice when this unit's range is known; it applies live and the channels retune
+    // the band is a choice when this unit's range is known; it applies live and the channels retune.
+    // An ANX4's band is per channel (shown on the channel) and not changed here
     bands ? unitProp('band', { type: 'enum', options: [...bands] }) : unitProp('band', { type: 'string' }, 'readOnly'),
     // writable by decision: the unit restarts itself after the change, which the adapter rides out
     { ...unitProp('highDensityMode', { type: 'boolean' }), effects: ['deviceRestart'] },
-    // the AD4D has no Quadversity; on an AD4Q it is shown, and only the front panel can change it
-    ...(isAd4d(model) ? [] : [unitProp('quadversity', { type: 'string' }, 'readOnly')]),
-    unitProp('antennaBias', { type: 'boolean' }),
+    // the AD4D has no Quadversity; on an AD4Q it is shown, and only the front panel can change it.
+    // The ANX4 has neither Quadversity nor the antenna-bias flag at the AD4Q's address
+    ...(isAd4d(model) || isAnx4(model) ? [] : [unitProp('quadversity', { type: 'string' }, 'readOnly')]),
+    ...(isAnx4(model) ? [] : [unitProp('antennaBias', { type: 'boolean' })]),
     // the plugin's own: while on, no frequency change (SoundBase's or a typed one) reaches a channel
     // whose transmitter has no ShowLink, so a change cannot leave a transmitter on the old frequency
     ...(showLinkLockOffered() ? [unitProp('requireShowlinkForFrequency', { type: 'boolean' })] : []),
@@ -834,13 +880,17 @@ class Ad4qMonitoringAdapter {
     );
     emit(KEYS.showLink, this.#channelMap((c) => (c.showLinkDetail ? { linked: c.showLinkDetail.linked, quality: c.showLinkDetail.quality, percent: c.showLinkDetail.quality == null ? 0 : c.showLinkDetail.quality * 20, activeSlots: c.showLinkDetail.activeSlots, registered: c.showLinkDetail.registered } : undefined)));
     emit(KEYS.status, this.#channelMap((c) => c.status));
+    emit(KEYS.band, this.#channelMap((c) => c.band));
     // the host's receiver tile reads these standard keys: the transmitter's power (255 = none, which
     // also hides the battery), the unit's mode/band/encryption, and interference on the RF meters
     emit('transmitterInfo', this.#channelMap((c) => (c.tx === undefined ? undefined : { powerLevel: isNum(c.tx.powerMw) ? c.tx.powerMw : 255 })));
     emit('channelStatus', this.#channelMap((c) => (c.status ? { rfIntDet: c.status.interference === 'DETECTED' ? 'CRITICAL' : 'NONE' } : undefined)));
-    if (dev.band !== undefined || dev.hdMode !== undefined) {
+    // an ANX4 has no unit-wide band: show the channels' when they agree, else list them
+    const channelBands = [...new Set(Object.values(this.state.channels).map((c) => c.band).filter(Boolean))];
+    const unitBand = dev.band ?? (channelBands.length ? channelBands.join(', ') : undefined);
+    if (unitBand !== undefined || dev.hdMode !== undefined) {
       emit('deviceProperties', {
-        rfBand: dev.band ?? null,
+        rfBand: unitBand ?? null,
         transmissionMode: dev.hdMode == null ? null : dev.hdMode ? 'HIGH_DENSITY' : 'STANDARD',
         encryptionMode: this.state.channels[1]?.encryption == null ? null : this.state.channels[1].encryption === 'On' ? 'ON' : 'OFF',
       });
@@ -857,8 +907,9 @@ class Ad4qMonitoringAdapter {
       fanMode: fanModeOf(dev.fanAlwaysOn),
       model: dev.model,
       serial: dev.serial,
-      band: dev.band,
+      band: unitBand,
       hdMode: dev.hdMode,
+      antennas: [dev.antennaA, dev.antennaB, dev.antennaC, dev.antennaD].filter(Boolean).join(', ') || undefined,
       quadversity: dev.quadversity == null ? undefined : dev.quadversity ? 'On' : 'Off',
       antennaBias: dev.antennaBias,
       encryption: this.state.channels[1]?.encryption,
@@ -1395,6 +1446,8 @@ class Ad4qSpectrumAdapter {
   }
 
   async #scan({ onTrace, plan, channel, antennas, signal }) {
+    // the ANX4 has no per-channel scan trigger (its four antennas are shared); its scan is not captured yet
+    if (isAnx4(this.state?.device?.model)) throw new Error('the ANX4\'s RF scan is not supported by this plugin yet');
     const curves = [];
     let lastReported = -1;
     try {

@@ -33,7 +33,8 @@ import {
   rosterIdAddr,
   unregisteredIndex,
   withTalkOutput,
-} from './properties.js';
+  MAX_CHANNELS,
+  isLicensedModel,} from './properties.js';
 import {
   ANTENNAS,
   SCAN_OBJ,
@@ -171,6 +172,7 @@ export class Ad4qDevice extends EventEmitter {
       this.port = unit.port;
       // the advert says which receiver this is, unless the caller already did
       if (!this.channelsGiven) this.channels = channelsFor(modelOf(unit.fctn));
+      this.licensed = isLicensedModel(modelOf(unit.fctn));
     }
     const localIp = this.localIp ?? localInterfaceFor(this.host)?.address;
     if (!localIp) throw new Error('this computer has no network interface that can reach the unit');
@@ -189,6 +191,19 @@ export class Ad4qDevice extends EventEmitter {
     session.on('leaving', () => this.#lost(new Error('the unit ended the session')));
     this.session = session;
     await session.connect();
+    // an ANX4 has the channels it is licensed for: count them rather than trust a tag
+    if (this.licensed && !this.channelsGiven) this.channels = await this.countChannels();
+  }
+
+  /**
+   * How many channels the unit has, by asking each one for its name until one is refused:
+   * an ANX4 answers its licensed channels and GET_FAILs the rest. At least one is assumed.
+   */
+  async countChannels() {
+    const got = await this.getMany(Array.from({ length: MAX_CHANNELS }, (_, i) => chanAddr(i + 1, CH.NAME)));
+    let n = 0;
+    while (n < MAX_CHANNELS && got.has(chanAddr(n + 1, CH.NAME))) n += 1;
+    return Math.max(1, n);
   }
 
   #lost(err) {

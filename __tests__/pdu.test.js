@@ -174,7 +174,8 @@ test('channel addresses are 0x02, channel index, then the object', () => {
   assert.equal(chanAddr(3, 0x0804), 0x02020804);
   assert.deepEqual(splitAddr(0x02030102), { channel: 4, obj: 0x0102 });
   assert.equal(splitAddr(0x01000000), null);
-  assert.throws(() => chanAddr(5, 0x0102), RangeError);
+  assert.equal(chanAddr(24, 0x0001), 0x02170001, 'an ANX4 goes to 24 channels');
+  assert.throws(() => chanAddr(25, 0x0102), RangeError);
 });
 
 test('an SLP advert parses into the unit it describes, and back', () => {

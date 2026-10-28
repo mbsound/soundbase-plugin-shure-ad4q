@@ -8,7 +8,7 @@ import { Ad4qDevice, ScanAborted, ScanFailed, WriteRefused } from '../driver/ad4
 import { SlpBrowser } from '../driver/acn/slp.js';
 import { AcnSession } from '../driver/acn/session.js';
 import { FakeAd4q } from '../driver/fake/fake-ad4q.js';
-import { CH, chanAddr, channelsFor, decodeUint, isReceiverAdvert, modelOf } from '../driver/ad4q/properties.js';
+import { CH, chanAddr, channelsFor, decodeUint, isReceiverAdvert, modelOf, isLicensedModel } from '../driver/ad4q/properties.js';
 import { DMP, strBatch } from '../driver/acn/pdu.js';
 import { SCAN_OBJ, configEntries, planScan } from '../driver/ad4q/scan.js';
 
@@ -249,6 +249,37 @@ test('model and channel count come from the function tag a unit advertises', () 
   assert.equal(channelsFor('AD4D'), 2);
   assert.equal(channelsFor('AD4Q'), 4);
   assert.equal(channelsFor('something-new'), 4);
+  // the ANX4 advertises its Axient Digital receiver module; its count is a licence, read from the unit
+  assert.equal(modelOf('MCR_AD'), 'ANX4');
+  assert.equal(isReceiverAdvert({ fctn: 'MCR_AD' }), true);
+  assert.equal(channelsFor('ANX4'), 24);
+  assert.equal(isLicensedModel('ANX4'), true);
+  assert.equal(isLicensedModel('AD4Q'), false);
+});
+
+test('an ANX4 is read for the channels it is licensed for, counted from the unit, with a band per channel', async (t) => {
+  const slpPort = await freeUdpPort();
+  const fake = new FakeAd4q({ slpPort, model: 'ANX4', channels: 16 });
+  await fake.listen();
+  const browser = new SlpBrowser({ port: slpPort, multicast: false, filter: isReceiverAdvert });
+  t.after(async () => {
+    browser.stop();
+    await fake.stop();
+  });
+  const unit = await browser.find('127.0.0.1', 3000);
+  assert.equal(unit.fctn, 'MCR_AD');
+  const device = new Ad4qDevice({ host: '127.0.0.1', browser, localIp: '127.0.0.1', advert: false, timings: { sendGapMs: 2, connectTimeoutMs: 4000 } });
+  t.after(() => device.close());
+  await device.connect();
+  assert.equal(device.channels, 16);
+  const all = await device.readAll();
+  assert.equal(all.device.model, 'ANX4');
+  assert.equal(all.device.band, undefined, 'no unit-wide band');
+  assert.deepEqual([all.device.antennaA, all.device.antennaD], ['Antenna A', 'Antenna D']);
+  assert.equal(Object.keys(all.channels).length, 16);
+  assert.equal(all.channels[16].name, 'Ch.16');
+  assert.equal(all.channels[16].band, 'G57+');
+  await assert.rejects(device.scanLimits(), /scan limits/, 'the ANX4 publishes no scan range');
 });
 
 test('a unit nothing advertises is reported by address, not left to time out silently', async () => {

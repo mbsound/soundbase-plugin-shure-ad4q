@@ -1,7 +1,8 @@
 # Shure AD4Q for SoundBase
 
 A [SoundBase](https://soundbase.app) plugin that puts a Shure **AD4Q**
-four-channel or **AD4D** two-channel Axient Digital receiver into SoundBase,
+four-channel or **AD4D** two-channel Axient Digital receiver, or an **ANX4**
+multichannel receiver, into SoundBase,
 over the network, with no Wireless Workbench in between. In device monitoring:
 each channel's name, frequency, gain, mute, tone generator and diversity on a
 card, with the settings that are safe to change writable from SoundBase. In the
@@ -174,6 +175,37 @@ All scan testing was on an AD4D-A. If an AD4Q stalls, send that log together
 with the unit's firmware, band and Quadversity setting; `AD4Q_DEBUG=1` in the
 plugin's environment logs every packet, which is enough to find the difference
 without a Workbench capture.
+
+## The ANX4
+
+The ANX4 is a one-rack-space frame that receives up to 16 channels of Axient
+Digital or 24 of ULX-D, with as many channels active as it has licences for
+(bought in one- and four-channel steps, so any count from 1 to 24). On the wire
+it is an AD4Q with more channels: the same session, the same channel objects,
+the same device settings. The differences this plugin handles:
+
+- **It advertises its receiver module, not the frame.** The SLP function tag is
+  `MCR_AD` (the Axient Digital module); the model string on the unit reads
+  `ANX4`. Discovery accepts the tag and, because the channel count is a licence
+  only the unit knows, opens a short session to count the channels before
+  listing it. SoundBase fixes a device's channel count from its product, so the
+  ANX4 is offered as `anx4-1` … `anx4-24` and discovery lists the one that
+  matches.
+- **The band is per channel**, where an AD4Q has one for the unit. Each
+  channel's band is a cell on its card (`x.shure-ad4q.band`); the unit cell
+  shows the channels' bands, and the band is not changed from here.
+- **Four named antennas** (A–D) are shown with the unit's settings. There is no
+  Quadversity flag and no antenna-bias flag at the AD4Q's addresses.
+- **No RF scan yet.** The ANX4 has no per-channel scan trigger (the antennas are
+  shared), and its scan has not been captured from Workbench; the ANX4 products
+  do not declare the spectrum analyzer.
+- Command strings (TCP 2202) are off until enabled on the unit, and the ANX4
+  firmware seen (1.0.16.0) had no such option; transmitter details then come
+  from the ACN bank alone.
+
+Status: read on a real ANX4 licensed for 16 channels (2026-10-28): discovery,
+the session, every channel's properties and meters, the device settings. Writes
+and the card in SoundBase are still to be checked on the unit.
 
 ## Known limits
 

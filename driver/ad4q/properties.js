@@ -9,18 +9,31 @@
 import { SCAN_LIMITS } from './scan.js';
 
 export const CHANNEL_COUNT = 4;
+/** The most channels any of these receivers has: an ANX4 licensed to the full 24 of ULX-D. */
+export const MAX_CHANNELS = 24;
 
-/** The receivers this driver speaks to, by the function tag they advertise (`AD4D_RX`, …). */
+/**
+ * The receivers this driver speaks to, by the function tag they advertise (`AD4D_RX`, …). The
+ * ANX4 advertises its receiver module (`MCR_AD` for Axient Digital) rather than the frame, and
+ * has as many channels as it is licensed for (0–24; 16 at most for Axient Digital), so its
+ * count is read from the unit (`countChannels`) rather than taken from the tag.
+ */
 export const MODELS = Object.freeze({
   AD4Q: { channels: 4 },
   AD4D: { channels: 2 },
+  ANX4: { channels: MAX_CHANNELS, licensed: true },
 });
 
-/** `AD4D` for an `AD4D_RX` advert, or null for anything that is not one of these receivers. */
+/** `AD4D` for an `AD4D_RX` advert, `ANX4` for an `MCR_AD` one, or null for anything else. */
 export function modelOf(fctn) {
-  const m = /^(ad4[qd])/i.exec(String(fctn ?? ''));
-  return m ? m[1].toUpperCase() : null;
+  const s = String(fctn ?? '');
+  const m = /^(ad4[qd])/i.exec(s);
+  if (m) return m[1].toUpperCase();
+  if (/^mcr/i.test(s)) return 'ANX4';
+  return null;
 }
+/** A model whose channel count is a licence, read from the unit. */
+export const isLicensedModel = (model) => MODELS[String(model ?? '').toUpperCase()]?.licensed === true;
 
 export const isReceiverAdvert = (unit) => modelOf(unit?.fctn) !== null;
 
@@ -51,6 +64,8 @@ export const CH = Object.freeze({
   TX_SERIAL: 0x110e,
   TX_MODEL: 0x110f,
   TX_BATTERY: 0x1111,
+  // ANX4: the channel's own band ("G57+"); an AD4Q/AD4D has one band for the unit and refuses this
+  BAND: 0x08f3,
 });
 
 /** The registered-transmitter roster: eight slots, each an identity and a model GUID. */
@@ -71,11 +86,16 @@ export const DEV = Object.freeze({
   QUADVERSITY: 0x01070009,
   ANTENNA_BIAS: 0x01070405,
   PANEL_LOCK: 0x010c0010,
+  // ANX4: its four antenna inputs, named; absent on an AD4Q/AD4D
+  ANTENNA_A: 0x01070241,
+  ANTENNA_B: 0x01070242,
+  ANTENNA_C: 0x01070243,
+  ANTENNA_D: 0x01070244,
 });
 
 export function chanAddr(channel, obj) {
-  if (!Number.isInteger(channel) || channel < 1 || channel > CHANNEL_COUNT)
-    throw new RangeError(`channel must be 1..${CHANNEL_COUNT} (got ${channel})`);
+  if (!Number.isInteger(channel) || channel < 1 || channel > MAX_CHANNELS)
+    throw new RangeError(`channel must be 1..${MAX_CHANNELS} (got ${channel})`);
   return ((CHANNEL_CLASS << 24) | ((channel - 1) << 16) | obj) >>> 0;
 }
 
@@ -83,7 +103,7 @@ export function chanAddr(channel, obj) {
 export function splitAddr(addr) {
   if (addr >>> 24 !== CHANNEL_CLASS) return null;
   const channel = ((addr >>> 16) & 0xff) + 1;
-  if (channel < 1 || channel > CHANNEL_COUNT) return null;
+  if (channel < 1 || channel > MAX_CHANNELS) return null;
   return { channel, obj: addr & 0xffff };
 }
 
@@ -261,6 +281,7 @@ export const rosterIdAddr = (channel, slot) => chanAddr(channel, ROSTER_ID_BASE 
 /** Channel settings, read at connect and refreshed on a timer; each also arrives as an EVENT. */
 export const CHANNEL_PROPS = Object.freeze([
   { key: 'name', obj: CH.NAME, decode: decodeString },
+  { key: 'band', obj: CH.BAND, decode: decodeString },
   { key: 'gainDb', obj: CH.GAIN_DB, decode: (v) => (v.length === 1 ? decodeInt(v) : null) },
   { key: 'muted', obj: CH.MUTE, decode: decodeBool },
   { key: 'overloadHold', obj: CH.OVERLOAD_HOLD, decode: decodeBool },
@@ -301,6 +322,10 @@ export const DEVICE_PROPS = Object.freeze([
   { key: 'quadversity', addr: DEV.QUADVERSITY, decode: decodeBool },
   { key: 'antennaBias', addr: DEV.ANTENNA_BIAS, decode: decodeBool },
   { key: 'panelLock', addr: DEV.PANEL_LOCK, decode: decodeBool },
+  { key: 'antennaA', addr: DEV.ANTENNA_A, decode: decodeString },
+  { key: 'antennaB', addr: DEV.ANTENNA_B, decode: decodeString },
+  { key: 'antennaC', addr: DEV.ANTENNA_C, decode: decodeString },
+  { key: 'antennaD', addr: DEV.ANTENNA_D, decode: decodeString },
   // what the unit will scan, in kHz; the start and stop follow the band and are pushed when it changes
   { key: 'scanStartKhz', addr: SCAN_LIMITS.START, decode: decodeUint },
   { key: 'scanStopKhz', addr: SCAN_LIMITS.STOP, decode: decodeUint },
