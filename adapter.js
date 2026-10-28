@@ -538,7 +538,10 @@ class Ad4qMonitoringAdapter {
     // ask the unit to push changes, so the picture stays current between refreshes
     await unit.subscribeAll();
     await this.#openCommands();
-    this.refreshTimer = setInterval(() => this.#refresh().catch(() => {}), this.refreshMs);
+    // a full read grows with the channel count (an ANX4 with 16 channels takes ~8 s), and the unit
+    // pushes changes between reads anyway, so a big unit is re-read less often
+    const refreshEvery = this.refreshMs * Math.max(1, Math.ceil(this.channels / 4));
+    this.refreshTimer = setInterval(() => this.#refresh().catch(() => {}), refreshEvery);
     this.refreshTimer.unref?.();
     return {
       channelCount: this.channels,
