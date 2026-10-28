@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "shure-ad4q",
   "name": "Shure Axient Digital Wireless",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "license": "MIT",
   "platforms": [
     "darwin-arm64",

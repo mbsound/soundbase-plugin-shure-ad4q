@@ -1,6 +1,6 @@
 {
   "name": "soundbase-plugin-shure-ad4q",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "SoundBase plugin: Shure Axient Digital wireless receivers (AD4Q, AD4D, ANX4).",
   "author": {
     "name": "Matt Bell",
