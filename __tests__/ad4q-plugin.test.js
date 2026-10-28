@@ -140,8 +140,12 @@ test('the ANX4 is a product per licensed channel count, 1 to 24, on the AD4Q til
     assert.equal(p.traits.channelCount, n);
     assert.equal(p.model.id, 'ad4q', 'borrows the AD4Q tile');
     assert.equal(p.model.name, 'ANX4');
-    assert.deepEqual(p.layout.channel.slice(0, -1), byId[PRODUCT].layout.channel, 'the AD4Q card plus one cell');
-    assert.deepEqual(p.layout.channel.at(-1), { type: 'value', bind: 'x.shure-ad4q.band', label: 'Band', format: 'text' });
+    const base = byId[PRODUCT].layout.channel.filter((n) => !(n.type === 'control' && n.propertyId === 'transmitterPower'));
+    assert.deepEqual(p.layout.channel.slice(0, base.length), base, 'the AD4Q card without its IR-preset control');
+    assert.deepEqual(p.layout.channel[base.length], { type: 'value', bind: 'x.shure-ad4q.band', label: 'Band', format: 'text' });
+    const sync = p.layout.channel.at(-1);
+    assert.equal(sync.label, 'Sync presets');
+    assert.equal(sync.children.length, 13);
   }
   assert.equal(manifest.products.length, 26);
 });

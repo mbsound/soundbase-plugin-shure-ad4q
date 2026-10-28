@@ -34,7 +34,10 @@ import {
   unregisteredIndex,
   withTalkOutput,
   MAX_CHANNELS,
-  isLicensedModel,} from './properties.js';
+  isLicensedModel,
+  SYNC_PRESETS,
+  syncRaw,
+  syncOptions,} from './properties.js';
 import {
   ANTENNAS,
   SCAN_OBJ,
@@ -71,6 +74,8 @@ const WRITES = Object.freeze({
   interferenceAvoidance: { obj: CH.INTERFERENCE_AVOIDANCE, encode: (v) => encodeU8(iaIndex(v)) },
   unregisteredTx: { obj: CH.UNREGISTERED_TX, encode: (v) => encodeU8(unregisteredIndex(v)) },
   rfPower: { obj: CH.RF_POWER, encode: (v) => encodeU8(rfPowerRaw(v)) },
+  // ANX4 sync presets: a label from the preset's list, or "No change"
+  ...Object.fromEntries(Object.entries(SYNC_PRESETS).map(([key, p]) => [key, { obj: p.obj, encode: (v) => { const raw = syncRaw(key, v); if (raw === null) throw new RangeError(`${key}: not one of ${syncOptions(key).join(', ')}`); return encodeU8(raw); } }])),
   // 0x03 is on, 0x00 off; the transmitters need an IR sync afterwards for the new key
   encryption: { obj: CH.ENCRYPTION, encode: (v) => encodeU8(v ? 0x03 : 0x00) },
 });
@@ -168,6 +173,7 @@ export class Ad4qDevice extends EventEmitter {
     this.session = null;
     this.pending = new Map(); // addr -> [{ kind, resolve, reject, timer }]
     this.values = new Map(); // addr -> Buffer, the last value heard
+    this.absent = new Set(); // addresses the unit has refused: not asked again
     this.timeouts = 0;
     this.closed = false;
   }
@@ -285,13 +291,14 @@ export class Ad4qDevice extends EventEmitter {
     else request.reject(request.kind === 'set' ? new WriteRefused(addr, payload) : new ReadRefused(addr, payload));
   }
 
-  #await(addr, kind) {
+  #await(addr, kind, { quiet = false } = {}) {
     let request;
     const promise = new Promise((resolve, reject) => {
       request = { kind, resolve, reject, timer: null };
       request.timer = setTimeout(() => {
         this.#drop(addr, request);
-        this.#missed();
+        // a quiet wait is a batched read whose refusal a unit may have dropped: not a sign the unit is gone
+        if (!quiet) this.#missed();
         reject(new Error(`no answer from the unit for 0x${addr.toString(16)}`));
       }, this.requestTimeoutMs);
       const queue = this.pending.get(addr) ?? [];
@@ -337,34 +344,50 @@ export class Ad4qDevice extends EventEmitter {
 
   /**
    * Many values at once: a Map of address to value, leaving out any the unit did not give.
-   * Each address is asked on its own PDU, a bounded number in flight: an ANX4 answers a
-   * batched GET's refusals without naming the address when the refused one is not first,
-   * so a batch with an absent object in it loses that answer and the caller waits out a
-   * timeout. Asked alone, a refusal comes back at once. A timeout is retried once; a
-   * refusal is final.
+   * The addresses go out batched, eight to a PDU. An ANX4 answers a batched GET's refusal
+   * without naming the address unless the refused object is first in the batch, so whatever
+   * a batch leaves unanswered is asked again on its own, where a refusal comes back at once.
+   * A refused address is remembered as absent and left out of later reads, so only the first
+   * read of a unit pays for the objects it lacks.
    */
-  async getMany(addrs, { concurrency = GET_CONCURRENCY, retries = 1 } = {}) {
+  async getMany(addrs, { retries = 1 } = {}) {
     const results = new Map();
-    const refused = new Set();
-    const round = async (list) => {
+    const list = addrs.filter((a) => !this.absent.has(a));
+    // round one: batched; a refusal the unit named is final, a silence is asked again
+    const waits = list.map((addr) => {
+      const answer = this.#await(addr, 'get', { quiet: true });
+      answer.promise.then(
+        (value) => results.set(addr, value),
+        (err) => { if (err instanceof ReadRefused) this.absent.add(addr); }
+      );
+      return answer;
+    });
+    try {
+      for (let i = 0; i < list.length; i += BATCH) {
+        await this.session.send(dmpBatch(DMP.GET, list.slice(i, i + BATCH)));
+      }
+    } catch (err) {
+      for (const wait of waits) wait.cancel();
+      this.#missed();
+      throw err;
+    }
+    await Promise.all(waits.map((w) => w.promise.catch(() => {})));
+    // later rounds: one per PDU, a bounded number in flight
+    for (let r = 0; r < retries && !this.closed; r += 1) {
+      const again = list.filter((a) => !results.has(a) && !this.absent.has(a));
+      if (!again.length) break;
       let next = 0;
       const worker = async () => {
-        while (next < list.length && !this.closed) {
-          const addr = list[next++];
+        while (next < again.length && !this.closed) {
+          const addr = again[next++];
           try {
             results.set(addr, await this.get(addr));
           } catch (err) {
-            if (err instanceof ReadRefused) refused.add(addr);
+            if (err instanceof ReadRefused) this.absent.add(addr);
           }
         }
       };
-      await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, worker));
-    };
-    await round(addrs);
-    for (let r = 0; r < retries; r += 1) {
-      const again = addrs.filter((a) => !results.has(a) && !refused.has(a));
-      if (!again.length || this.closed) break;
-      await round(again);
+      await Promise.all(Array.from({ length: Math.min(GET_CONCURRENCY, again.length) }, worker));
     }
     return results;
   }

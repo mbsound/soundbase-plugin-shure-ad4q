@@ -196,6 +196,14 @@ the same device settings. The differences this plugin handles:
   shows the channels' bands, and the band is not changed from here.
 - **Four named antennas** (A–D) are shown with the unit's settings. There is no
   Quadversity flag and no antenna-bias flag at the AD4Q's addresses.
+- **Sync presets.** What the next IR sync sends to a transmitter — RF power level,
+  bodypack pad and offset, handheld offset, the plug-on's phantom power, pad,
+  offset and high-pass filter, polarity, mute mode, locks, battery type and
+  custom groups — are shown and set per channel (`x.shure-ad4q.sync`, a
+  "Sync presets" group on the card). Each row offers the values read from a
+  unit plus their obvious neighbours and "No change"; the unit's read-back is
+  the check. The AD4Q's own IR-preset RF power control is not offered on the
+  ANX4, which keeps that setting here instead.
 - **No RF scan yet.** The ANX4 has no per-channel scan trigger (the antennas are
   shared), and its scan has not been captured from Workbench; the ANX4 products
   do not declare the spectrum analyzer.
@@ -203,9 +211,11 @@ the same device settings. The differences this plugin handles:
   firmware seen (1.0.16.0) had no such option; transmitter details then come
   from the ACN bank alone.
 
-Status: read on a real ANX4 licensed for 16 channels (2026-10-28): discovery,
-the session, every channel's properties and meters, the device settings. Writes
-and the card in SoundBase are still to be checked on the unit.
+Status: read on a real ANX4 licensed for 16 channels (2026-10-28, firmware
+1.2.18.0): discovery, the session, every channel's properties, meters and sync
+presets, the device settings; a full read takes about 3.5 s the first time and
+1.6 s after. Writes and the card in SoundBase are still to be checked on the
+unit.
 
 ## Known limits
 

@@ -280,6 +280,16 @@ test('an ANX4 is read for the channels it is licensed for, counted from the unit
   assert.equal(all.channels[16].name, 'Ch.16');
   assert.equal(all.channels[16].band, 'G57+');
   await assert.rejects(device.scanLimits(), /scan limits/, 'the ANX4 publishes no scan range');
+  // the sync presets read as "No change" and take a label from their lists, or "No change" back
+  assert.equal(all.channels[1].syncRfPower, 'No change');
+  await device.setChannel(1, 'syncRfPower', 'High');
+  await device.setChannel(1, 'syncHandheldOffset', '7 dB');
+  await device.setChannel(1, 'syncLocks', 'Menu');
+  const again = await device.readAll();
+  assert.deepEqual([again.channels[1].syncRfPower, again.channels[1].syncHandheldOffset, again.channels[1].syncLocks], ['High', '7 dB', 'Menu']);
+  await device.setChannel(1, 'syncRfPower', 'No change');
+  assert.equal((await device.readAll()).channels[1].syncRfPower, 'No change');
+  await assert.rejects(device.setChannel(1, 'syncRfPower', 'Loud'), RangeError);
 });
 
 test('a unit nothing advertises is reported by address, not left to time out silently', async () => {

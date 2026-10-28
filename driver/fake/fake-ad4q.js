@@ -41,7 +41,7 @@ import {
   encodeString,
   rosterAddrs,
   rosterIdAddr,
-} from '../ad4q/properties.js';
+  SYNC_PRESETS,} from '../ad4q/properties.js';
 
 const u8 = (n) => Buffer.from([n & 0xff]);
 const u16 = (n) => {
@@ -177,7 +177,11 @@ export class FakeAd4q {
     for (let c = 1; c <= this.channels; c += 1) {
       const at = (obj) => chanAddr(c, obj);
       put(at(CH.NAME), encodeString(this.anx4 ? `Ch.${String(c).padStart(2, '0')}` : `Channel${c}`), (v) => v.length >= 2 && v.readUInt16BE(0) <= 10);
-      if (this.anx4) put(at(CH.BAND), encodeString('G57+'));
+      if (this.anx4) {
+        put(at(CH.BAND), encodeString('G57+'));
+        // the sync presets as a fresh unit reads them: every row "No change"
+        for (const p of Object.values(SYNC_PRESETS)) put(at(p.obj), u8(0xff), (v) => v.length === 1);
+      }
       put(at(CH.GAIN_DB), u8(0), range(-18, 42));
       put(at(CH.MUTE), u8(0), inSet(0, 1));
       put(at(CH.OVERLOAD_HOLD), u8(0), inSet(0, 1));

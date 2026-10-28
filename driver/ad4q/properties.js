@@ -66,6 +66,21 @@ export const CH = Object.freeze({
   TX_BATTERY: 0x1111,
   // ANX4: the channel's own band ("G57+"); an AD4Q/AD4D has one band for the unit and refuses this
   BAND: 0x08f3,
+  // ANX4: the sync presets — what an IR sync sends to the transmitter. Mapped row by row from
+  // Workbench's "Sync presets" panel (2026-10-28); ff is "No change" in every one
+  SYNC_RF_POWER: 0x1512, // 00 Normal, 01 High (02 Low assumed from the ADTQ's order)
+  SYNC_BP_PAD: 0x1513, // 00 Off
+  SYNC_BP_OFFSET: 0x1517, // dB
+  SYNC_HH_OFFSET: 0x1516, // dB
+  SYNC_PLUGON_PHANTOM: 0x152a, // volts: 0x30 = +48 V
+  SYNC_PLUGON_PAD: 0x152d, // dB, signed: 0x0c = +12
+  SYNC_PLUGON_OFFSET: 0x152b, // dB
+  SYNC_PLUGON_HPF: 0x152c, // Hz: 0xb4 = 180
+  SYNC_POLARITY: 0x151b, // 00 Positive, 01 Negative
+  SYNC_MUTE_MODE: 0x1519, // 01 On
+  SYNC_LOCKS: 0x1510, // 02 Power, 04 Menu (a bitmask: 00 None, 06 All assumed)
+  SYNC_BATTERY: 0x1514, // 03 NiMH; read 02 before any change
+  SYNC_CUSTOM_GROUPS: 0x1515, // 00 unticked
 });
 
 /** The registered-transmitter roster: eight slots, each an identity and a model GUID. */
@@ -279,9 +294,46 @@ export const rosterIdAddr = (channel, slot) => chanAddr(channel, ROSTER_ID_BASE 
 // --- what is read --------------------------------------------------------------
 
 /** Channel settings, read at connect and refreshed on a timer; each also arrives as an EVENT. */
+/**
+ * The sync presets, each with the labels Workbench shows and the byte each one is. `ff` is
+ * "No change". A value not listed decodes as `#n` and cannot be written; the lists hold what has
+ * been read from a unit plus the obvious neighbours (marked), which the unit's read-back checks.
+ */
+export const SYNC_NO_CHANGE = 'No change';
+const dbRange = (lo, hi) => Object.fromEntries(Array.from({ length: hi - lo + 1 }, (_, i) => [`${lo + i} dB`, lo + i]));
+export const SYNC_PRESETS = Object.freeze({
+  syncRfPower: { obj: CH.SYNC_RF_POWER, values: { Normal: 0, High: 1, Low: 2 } }, // Low assumed
+  syncBodypackPad: { obj: CH.SYNC_BP_PAD, values: { Off: 0, On: 1 } }, // On assumed
+  syncBodypackOffset: { obj: CH.SYNC_BP_OFFSET, values: dbRange(0, 21) },
+  syncHandheldOffset: { obj: CH.SYNC_HH_OFFSET, values: dbRange(0, 21) },
+  syncPlugOnPhantom: { obj: CH.SYNC_PLUGON_PHANTOM, values: { Off: 0, '+48 V': 48 } }, // Off assumed
+  syncPlugOnPad: { obj: CH.SYNC_PLUGON_PAD, values: { '-12 dB': -12, '0 dB': 0, '+12 dB': 12 }, signed: true }, // -12 and 0 assumed
+  syncPlugOnOffset: { obj: CH.SYNC_PLUGON_OFFSET, values: dbRange(0, 21) },
+  syncPlugOnHpf: { obj: CH.SYNC_PLUGON_HPF, values: { Off: 0, '180 Hz': 180 } }, // Off assumed
+  syncPolarity: { obj: CH.SYNC_POLARITY, values: { Positive: 0, Negative: 1 } },
+  syncMuteMode: { obj: CH.SYNC_MUTE_MODE, values: { Off: 0, On: 1 } }, // Off assumed
+  syncLocks: { obj: CH.SYNC_LOCKS, values: { None: 0, Power: 2, Menu: 4, All: 6 } }, // None and All assumed
+  syncBattery: { obj: CH.SYNC_BATTERY, values: { NiMH: 3 } },
+  syncCustomGroups: { obj: CH.SYNC_CUSTOM_GROUPS, values: { Off: 0, On: 1 } }, // On assumed
+});
+export const syncOptions = (key) => [...Object.keys(SYNC_PRESETS[key].values), SYNC_NO_CHANGE];
+export function syncLabel(key, v) {
+  if (!v || v.length !== 1) return null;
+  if (v[0] === 0xff) return SYNC_NO_CHANGE;
+  const n = SYNC_PRESETS[key].signed ? v.readInt8(0) : v[0];
+  const hit = Object.entries(SYNC_PRESETS[key].values).find(([, raw]) => raw === n);
+  return hit ? hit[0] : `#${n}`;
+}
+export function syncRaw(key, label) {
+  if (label === SYNC_NO_CHANGE) return 0xff;
+  const raw = SYNC_PRESETS[key].values[label];
+  return raw === undefined ? null : raw & 0xff;
+}
+
 export const CHANNEL_PROPS = Object.freeze([
   { key: 'name', obj: CH.NAME, decode: decodeString },
   { key: 'band', obj: CH.BAND, decode: decodeString },
+  ...Object.entries(SYNC_PRESETS).map(([key, p]) => ({ key, obj: p.obj, decode: (v) => syncLabel(key, v) })),
   { key: 'gainDb', obj: CH.GAIN_DB, decode: (v) => (v.length === 1 ? decodeInt(v) : null) },
   { key: 'muted', obj: CH.MUTE, decode: decodeBool },
   { key: 'overloadHold', obj: CH.OVERLOAD_HOLD, decode: decodeBool },

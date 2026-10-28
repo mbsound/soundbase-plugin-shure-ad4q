@@ -45,7 +45,9 @@ import {
   mhzToKhz,
   quantizeKhz,
   toneLevelDb,
-  MAX_CHANNELS,} from './driver/ad4q/properties.js';
+  MAX_CHANNELS,
+  SYNC_PRESETS,
+  syncOptions,} from './driver/ad4q/properties.js';
 import { SCAN_LIMITS, defaultSpan, peakOf, planScan, scanDurationMs } from './driver/ad4q/scan.js';
 import { SlpBrowser } from './driver/acn/slp.js';
 import { COMMAND_PORT, CommandClient, STATUS_PROPS, TX_PROPS, decodeShowLink, decodeTransmitter } from './driver/cmdstrings/client.js';
@@ -149,7 +151,10 @@ export const KEYS = Object.freeze({
   status: ns('status'),
   // ANX4: the channel's own band
   band: ns('band'),
+  // ANX4: the sync presets, one object per channel with a label per row
+  sync: ns('sync'),
 });
+const SYNC_IDS = Object.keys(SYNC_PRESETS);
 
 const SLOT_OPTIONS = ['None', ...Array.from({ length: ROSTER_SLOTS }, (_, i) => `Slot ${i + 1}`)];
 // `xlrNormal` -> `talkNormalXlr`: position first, then output, as the Workbench grid reads
@@ -401,7 +406,10 @@ export const propertyDescriptors = ({ model, quickToggles = true } = {}) => {
     channel('interferenceAvoidance', { type: 'enum', options: [...IA_MODES] }, KEYS.interferenceAvoidance),
     channel('unregisteredTransmitter', { type: 'enum', options: [...UNREGISTERED_ACTIONS] }, KEYS.unregisteredTx),
     // the IR preset's RF power: what a transmitter takes on at its next IR sync
-    channel('transmitterPower', { type: 'enum', options: [...RF_POWER_MODES] }, KEYS.rfPower),
+    // the AD4Q/AD4D IR-preset RF power; the ANX4 keeps it among its sync presets instead
+    ...(isAnx4(model) ? [] : [channel('transmitterPower', { type: 'enum', options: [...RF_POWER_MODES] }, KEYS.rfPower)]),
+    // ANX4 sync presets: what the next IR sync sends to the transmitter
+    ...(isAnx4(model) ? SYNC_IDS.map((id) => ({ id, scope: 'channel', access: 'readWrite', stateBinding: { key: KEYS.sync, path: [id] }, value: { type: 'enum', options: syncOptions(id) } })) : []),
     // each routing of the talk switch is its own switch; true means that output is on
     ...TALK_OUTPUTS.map((o) => ({
       id: talkPropertyId(o.id),
@@ -884,6 +892,7 @@ class Ad4qMonitoringAdapter {
     emit(KEYS.showLink, this.#channelMap((c) => (c.showLinkDetail ? { linked: c.showLinkDetail.linked, quality: c.showLinkDetail.quality, percent: c.showLinkDetail.quality == null ? 0 : c.showLinkDetail.quality * 20, activeSlots: c.showLinkDetail.activeSlots, registered: c.showLinkDetail.registered } : undefined)));
     emit(KEYS.status, this.#channelMap((c) => c.status));
     emit(KEYS.band, this.#channelMap((c) => c.band));
+    emit(KEYS.sync, this.#channelMap((c) => { const out = {}; for (const id of SYNC_IDS) if (c[id] != null) out[id] = c[id]; return Object.keys(out).length ? out : undefined; }));
     // the host's receiver tile reads these standard keys: the transmitter's power (255 = none, which
     // also hides the battery), the unit's mode/band/encryption, and interference on the RF meters
     emit('transmitterInfo', this.#channelMap((c) => (c.tx === undefined ? undefined : { powerLevel: isNum(c.tx.powerMw) ? c.tx.powerMw : 255 })));
@@ -1058,6 +1067,14 @@ class Ad4qMonitoringAdapter {
         if (typeof value !== 'boolean') throw badValue(propertyId, 'true or false');
         target = ['device', propertyId, value];
         break;
+      case 'syncRfPower': case 'syncBodypackPad': case 'syncBodypackOffset': case 'syncHandheldOffset': case 'syncPlugOnPhantom':
+      case 'syncPlugOnPad': case 'syncPlugOnOffset': case 'syncPlugOnHpf': case 'syncPolarity': case 'syncMuteMode':
+      case 'syncLocks': case 'syncBattery': case 'syncCustomGroups': {
+        const label = oneOf(value, syncOptions(propertyId));
+        if (!label) throw badValue(propertyId, `one of ${syncOptions(propertyId).join(', ')}`);
+        target = ['channel', propertyId, label];
+        break;
+      }
       case 'transmitterPower': {
         const mode = oneOf(value, RF_POWER_MODES);
         if (!mode) throw badValue(propertyId, `one of ${RF_POWER_MODES.join(', ')}`);

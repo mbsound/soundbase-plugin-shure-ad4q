@@ -1052,10 +1052,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -1125,6 +1121,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -1432,10 +1500,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -1505,6 +1569,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -1812,10 +1948,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -1885,6 +2017,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -2192,10 +2396,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -2265,6 +2465,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -2572,10 +2844,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -2645,6 +2913,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -2952,10 +3292,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -3025,6 +3361,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -3332,10 +3740,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -3405,6 +3809,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -3712,10 +4188,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -3785,6 +4257,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -4092,10 +4636,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -4165,6 +4705,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -4472,10 +5084,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -4545,6 +5153,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -4852,10 +5532,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -4925,6 +5601,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -5232,10 +5980,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -5305,6 +6049,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -5612,10 +6428,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -5685,6 +6497,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -5992,10 +6876,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -6065,6 +6945,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -6372,10 +7324,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -6445,6 +7393,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -6752,10 +7772,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -6825,6 +7841,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -7132,10 +8220,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -7205,6 +8289,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -7512,10 +8668,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -7585,6 +8737,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -7892,10 +9116,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -7965,6 +9185,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -8272,10 +9564,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -8345,6 +9633,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -8652,10 +10012,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -8725,6 +10081,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -9032,10 +10460,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -9105,6 +10529,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -9412,10 +10908,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -9485,6 +10977,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -9792,10 +11356,6 @@
             "propertyId": "unregisteredTransmitter"
           },
           {
-            "type": "control",
-            "propertyId": "transmitterPower"
-          },
-          {
             "type": "group",
             "label": "Talk switch: output routing",
             "direction": "column",
@@ -9865,6 +11425,78 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "group",
+            "label": "Sync presets",
+            "direction": "column",
+            "children": [
+              {
+                "type": "control",
+                "propertyId": "syncRfPower",
+                "label": "RF power level"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackPad",
+                "label": "Bodypack pad"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBodypackOffset",
+                "label": "Bodypack offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncHandheldOffset",
+                "label": "Handheld offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPhantom",
+                "label": "Plug-on phantom power"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnPad",
+                "label": "Plug-on input pad / boost"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnOffset",
+                "label": "Plug-on offset"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPlugOnHpf",
+                "label": "Plug-on high pass filter"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncPolarity",
+                "label": "Polarity"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncMuteMode",
+                "label": "Mute mode"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncLocks",
+                "label": "Locks"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncBattery",
+                "label": "Battery type"
+              },
+              {
+                "type": "control",
+                "propertyId": "syncCustomGroups",
+                "label": "Sync custom groups"
+              }
+            ]
           }
         ],
         "device": [
@@ -10041,6 +11673,11 @@
     },
     {
       "key": "x.shure-ad4q.band",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.sync",
       "scope": "channel",
       "op": "merge"
     }
