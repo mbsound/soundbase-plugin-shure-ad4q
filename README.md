@@ -1,4 +1,4 @@
-# Shure AD4Q for SoundBase
+# Shure Axient Digital Wireless for SoundBase
 
 A [SoundBase](https://soundbase.app) plugin that puts a Shure **AD4Q**
 four-channel or **AD4D** two-channel Axient Digital receiver, or an **ANX4**
