@@ -516,7 +516,7 @@ class Ad4qMonitoringAdapter {
 
   /** A session to the unit, wired to this adapter; the caller connects it. */
   async #newUnit() {
-    let options = { host: this.host, channels: this.channels, log: (l, m) => this.log(l, m) };
+    let options = { host: this.host, channels: this.channels, licensed: ANX4_PRODUCT_RE.test(String(this.device?.product ?? '')), log: (l, m) => this.log(l, m) };
     if (this.simulated) {
       const fake = await ensureSimulator();
       options = {
@@ -1239,7 +1239,7 @@ class Ad4qSpectrumAdapter {
 
   async open() {
     if (this.hostError) throw this.hostError;
-    let options = { host: this.host, channels: this.channels, log: (l, m) => this.log(l, m) };
+    let options = { host: this.host, channels: this.channels, licensed: ANX4_PRODUCT_RE.test(String(this.device?.product ?? '')), log: (l, m) => this.log(l, m) };
     if (this.simulated) {
       const fake = await ensureSimulator();
       options = {

@@ -156,11 +156,14 @@ export class Ad4qDevice extends EventEmitter {
     controllerCid = null,
     log = () => {},
     scanStallMs = 20_000,
+    licensed = false,
   }) {
     super();
     // an AD4D has two channels; asking it for four leaves reads that are never answered
     this.channels = channels ?? CHANNEL_COUNT;
     this.channelsGiven = channels != null;
+    // an ANX4 (its channel count is a licence, and it has properties an AD4Q lacks); also learned from the advert
+    this.licensed = licensed === true;
     this.controllerCid = controllerCid;
     this.host = host;
     this.port = port;
@@ -193,7 +196,7 @@ export class Ad4qDevice extends EventEmitter {
       this.port = unit.port;
       // the advert says which receiver this is, unless the caller already did
       if (!this.channelsGiven) this.channels = channelsFor(modelOf(unit.fctn));
-      this.licensed = isLicensedModel(modelOf(unit.fctn));
+      this.licensed ||= isLicensedModel(modelOf(unit.fctn));
     }
     const localIp = this.localIp ?? localInterfaceFor(this.host)?.address;
     if (!localIp) throw new Error('this computer has no network interface that can reach the unit');
@@ -470,16 +473,21 @@ export class Ad4qDevice extends EventEmitter {
   async subscribe(addrs) {
     for (let i = 0; i < addrs.length; i += BATCH) {
       await this.session.send(dmpBatch(DMP.SUBSCRIBE, addrs.slice(i, i + BATCH)));
-      // a breath between batches: a 16-channel unit is sent several hundred of these
-      if (i + BATCH < addrs.length) await new Promise((resolve) => setTimeout(resolve, SUBSCRIBE_GAP_MS));
+      // a breath between batches for an ANX4, which is sent several hundred of these
+      if (this.licensed && i + BATCH < addrs.length) await new Promise((resolve) => setTimeout(resolve, SUBSCRIBE_GAP_MS));
     }
   }
 
   /** Everything the plugin models, as `{ device, channels: { 1: {...}, … } }`. */
+  /** The properties this unit has: the ANX4-only ones are not asked of an AD4Q or AD4D. */
+  #props(list) {
+    return this.licensed ? list : list.filter((p) => !p.anx4);
+  }
+
   async readAll() {
     const wanted = [
-      ...DEVICE_PROPS.map((p) => p.addr),
-      ...Array.from({ length: this.channels }, (_, c) => CHANNEL_PROPS.map((p) => chanAddr(c + 1, p.obj))).flat(),
+      ...this.#props(DEVICE_PROPS).map((p) => p.addr),
+      ...Array.from({ length: this.channels }, (_, c) => this.#props(CHANNEL_PROPS).map((p) => chanAddr(c + 1, p.obj))).flat(),
     ];
     const got = await this.getMany(wanted);
     const state = { device: {}, channels: {} };
@@ -500,9 +508,9 @@ export class Ad4qDevice extends EventEmitter {
   /** Subscribe to every modelled property, and the live level. */
   async subscribeAll() {
     const addrs = [
-      ...DEVICE_PROPS.map((p) => p.addr),
+      ...this.#props(DEVICE_PROPS).map((p) => p.addr),
       ...Array.from({ length: this.channels }, (_, c) => [
-        ...[...CHANNEL_PROPS, ...METER_PROPS].map((p) => chanAddr(c + 1, p.obj)),
+        ...[...this.#props(CHANNEL_PROPS), ...METER_PROPS].map((p) => chanAddr(c + 1, p.obj)),
         // the roster slots only fill briefly during an IR sync, so they are watched, not polled
         ...rosterAddrs(c + 1),
       ]).flat(),

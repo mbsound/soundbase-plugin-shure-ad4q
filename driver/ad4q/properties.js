@@ -355,8 +355,9 @@ export function syncRaw(key, label) {
 
 export const CHANNEL_PROPS = Object.freeze([
   { key: 'name', obj: CH.NAME, decode: decodeString },
-  { key: 'band', obj: CH.BAND, decode: decodeString },
-  ...Object.entries(SYNC_PRESETS).map(([key, p]) => ({ key, obj: p.obj, decode: (v) => syncLabel(key, v) })),
+  // ANX4 only (`anx4: true`): an AD4Q/AD4D refuses these, so they are not asked of one
+  { key: 'band', obj: CH.BAND, decode: decodeString, anx4: true },
+  ...Object.entries(SYNC_PRESETS).map(([key, p]) => ({ key, obj: p.obj, decode: (v) => syncLabel(key, v), anx4: true })),
   { key: 'gainDb', obj: CH.GAIN_DB, decode: (v) => (v.length === 1 ? decodeInt(v) : null) },
   { key: 'muted', obj: CH.MUTE, decode: decodeBool },
   { key: 'overloadHold', obj: CH.OVERLOAD_HOLD, decode: decodeBool },
@@ -397,10 +398,10 @@ export const DEVICE_PROPS = Object.freeze([
   { key: 'quadversity', addr: DEV.QUADVERSITY, decode: decodeBool },
   { key: 'antennaBias', addr: DEV.ANTENNA_BIAS, decode: decodeBool },
   { key: 'panelLock', addr: DEV.PANEL_LOCK, decode: decodeBool },
-  { key: 'antennaA', addr: DEV.ANTENNA_A, decode: decodeString },
-  { key: 'antennaB', addr: DEV.ANTENNA_B, decode: decodeString },
-  { key: 'antennaC', addr: DEV.ANTENNA_C, decode: decodeString },
-  { key: 'antennaD', addr: DEV.ANTENNA_D, decode: decodeString },
+  { key: 'antennaA', addr: DEV.ANTENNA_A, decode: decodeString, anx4: true },
+  { key: 'antennaB', addr: DEV.ANTENNA_B, decode: decodeString, anx4: true },
+  { key: 'antennaC', addr: DEV.ANTENNA_C, decode: decodeString, anx4: true },
+  { key: 'antennaD', addr: DEV.ANTENNA_D, decode: decodeString, anx4: true },
   // what the unit will scan, in kHz; the start and stop follow the band and are pushed when it changes
   { key: 'scanStartKhz', addr: SCAN_LIMITS.START, decode: decodeUint },
   { key: 'scanStopKhz', addr: SCAN_LIMITS.STOP, decode: decodeUint },
