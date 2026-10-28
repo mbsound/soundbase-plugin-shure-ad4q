@@ -199,7 +199,8 @@ the same device settings. The differences this plugin handles:
 - **Antenna pair per channel.** Each channel listens on antennas A/B or C/D;
   it is shown and set on the card (`x.shure-ad4q.antenna`). The unit keeps it as
   a string-keyed property (`RF_ANTENNA:ANTENNA_SELECTION_MODE/CH=n`, 00 AB, 01
-  CD), written the way Workbench writes it; the command-strings port refuses it.
+  CD), written the way Workbench writes it (confirmed on the bench ANX4: channel
+  1 CD to AB, read back); the command-strings port refuses it.
 - **The licence is read, not guessed.** The unit reports its licensed channel
   count (`LICENSE:RF_CHANNEL_COUNT`), and discovery offers the product of that
   size; counting the channels that answer is the fallback.
@@ -220,9 +221,9 @@ the same device settings. The differences this plugin handles:
 
 Status: read on a real ANX4 licensed for 16 channels (2026-10-28, firmware
 1.2.18.0): discovery, the session, every channel's properties, meters and sync
-presets, the device settings; a full read takes about 3.5 s the first time and
-1.6 s after. Writes and the card in SoundBase are still to be checked on the
-unit.
+presets, the antenna pairs, the device settings; a full read takes about 3.5 s
+the first time and 1.6 s after. The antenna write is confirmed on the unit;
+the sync-preset writes and the card in SoundBase are still to be checked.
 
 ## Known limits
 
