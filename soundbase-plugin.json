@@ -1123,6 +1123,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -1569,6 +1580,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -2019,6 +2041,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -2465,6 +2498,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -2915,6 +2959,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -3361,6 +3416,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -3811,6 +3877,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -4257,6 +4334,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -4707,6 +4795,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -5153,6 +5252,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -5603,6 +5713,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -6049,6 +6170,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -6499,6 +6631,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -6945,6 +7088,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -7395,6 +7549,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -7841,6 +8006,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -8291,6 +8467,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -8737,6 +8924,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -9187,6 +9385,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -9633,6 +9842,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -10083,6 +10303,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -10529,6 +10760,17 @@
             "bind": "x.shure-ad4q.band",
             "label": "Band",
             "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
           },
           {
             "type": "group",
@@ -10979,6 +11221,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -11427,6 +11680,17 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.antenna",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
+            "type": "control",
+            "propertyId": "antenna",
+            "label": "Antennas"
+          },
+          {
             "type": "group",
             "label": "Sync presets",
             "direction": "column",
@@ -11678,6 +11942,11 @@
     },
     {
       "key": "x.shure-ad4q.sync",
+      "scope": "channel",
+      "op": "merge"
+    },
+    {
+      "key": "x.shure-ad4q.antenna",
       "scope": "channel",
       "op": "merge"
     }

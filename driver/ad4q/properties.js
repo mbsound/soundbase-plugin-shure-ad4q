@@ -32,6 +32,20 @@ export function modelOf(fctn) {
   if (/^mcr/i.test(s)) return 'ANX4';
   return null;
 }
+/**
+ * String-keyed properties (DMP address header 0x07), the way Workbench reads and writes the
+ * ANX4's licence and antenna selection (decoded capture, 2026-10-28). Channels are zero-based
+ * in the key.
+ */
+export const KEY = Object.freeze({
+  LICENSED_CHANNELS: 'LICENSE:RF_CHANNEL_COUNT', // u16: 0x0010 = 16
+  MAX_CHANNELS: 'RF:MAX_NUM_CHANNELS', // byte: 0x10 = 16 in an Axient Digital mode
+  TRANSMISSION_MODE: 'RF:CURRENT_TRANSMISSION_MODE', // byte: 02 read with the unit in AD_STANDARD; the rest unmapped
+  antennaSelection: (channel) => `RF_ANTENNA:ANTENNA_SELECTION_MODE/CH=${channel - 1}`, // byte: 00 AB, 01 CD
+});
+/** The ANX4's antenna pair per channel, by the byte the unit stores. */
+export const ANTENNA_SELECTIONS = Object.freeze(['AB', 'CD']);
+
 /** A model whose channel count is a licence, read from the unit. */
 export const isLicensedModel = (model) => MODELS[String(model ?? '').toUpperCase()]?.licensed === true;
 

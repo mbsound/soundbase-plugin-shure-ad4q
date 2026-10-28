@@ -138,11 +138,16 @@ async function main() {
     } else if (command === 'freq') {
       const ch = channelArg(args[1]);
       await write(device, `frequency ch ${ch}`, () => device.setChannel(ch, 'frequencyMhz', Number(args[2])), Number(args[2]));
+    } else if (command === 'antenna') {
+      const ch = channelArg(args[1]);
+      const pair = String(args[2] ?? '').toUpperCase();
+      if (pair !== 'AB' && pair !== 'CD') fail('antenna is AB or CD (ANX4)');
+      await write(device, `antenna ch ${ch}`, () => device.setAntenna(ch, pair), pair);
     } else if (command === 'name') {
       const ch = channelArg(args[1]);
       await write(device, `name ch ${ch}`, () => device.setChannel(ch, 'name', args.slice(2).join(' ')), args.slice(2).join(' '));
     } else {
-      fail('usage: ad4q.mjs discover | status <ip> | watch <ip> | scan <ip> <ch> <A|B> [startMHz stopMHz] | tone|mute|gain|freq|name <ip> <ch> <value>');
+      fail('usage: ad4q.mjs discover | status <ip> | watch <ip> | scan <ip> <ch> <A|B> [startMHz stopMHz] | tone|mute|gain|freq|name|antenna <ip> <ch> <value>');
     }
   } finally {
     await device.close();

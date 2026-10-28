@@ -37,7 +37,9 @@ import {
   isLicensedModel,
   SYNC_PRESETS,
   syncRaw,
-  syncOptions,} from './properties.js';
+  syncOptions,
+  KEY,
+  ANTENNA_SELECTIONS,} from './properties.js';
 import {
   ANTENNAS,
   SCAN_OBJ,
@@ -214,10 +216,81 @@ export class Ad4qDevice extends EventEmitter {
   }
 
   /**
-   * How many channels the unit has, by asking each one for its name until one is refused:
-   * an ANX4 answers its licensed channels and GET_FAILs the rest. At least one is assumed.
+   * String-keyed values (`KEY`): a Map of key to raw value for those the unit answered.
+   * The unit answers each with a string-keyed GET_REPLY; one that does not answer within
+   * `timeoutMs` is left out.
+   */
+  async getKeys(keys, { timeoutMs = 1500 } = {}) {
+    const results = new Map();
+    const wanted = new Set(keys);
+    let done;
+    const finished = new Promise((resolve) => { done = resolve; });
+    const onString = ({ vector, key, value }) => {
+      if (!wanted.has(key) || vector !== DMP.GET_REPLY) return;
+      results.set(key, value);
+      if (results.size === wanted.size) done();
+    };
+    this.on('string', onString);
+    const timer = setTimeout(() => done(), timeoutMs);
+    try {
+      for (let i = 0; i < keys.length; i += BATCH) {
+        await this.session.send(strBatch(DMP.GET, keys.slice(i, i + BATCH).map((key) => ({ key }))));
+      }
+      if (keys.length) await finished;
+    } finally {
+      clearTimeout(timer);
+      this.off('string', onString);
+    }
+    return results;
+  }
+
+  /**
+   * Write one string-keyed value the way Workbench does (a committed SET), then poll it until
+   * the unit holds it or `timeoutMs` passes. Returns the value it holds, or null with no answer.
+   */
+  async setKey(key, value, { timeoutMs = 2000 } = {}) {
+    await this.session.send(strBatch(DMP.SET, [{ key, value }]), { commit: true });
+    const until = Date.now() + timeoutMs;
+    let held = null;
+    while (Date.now() < until && !this.closed) {
+      held = (await this.getKeys([key], { timeoutMs: 500 })).get(key) ?? null;
+      if (held && held.equals(value)) break;
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    return held;
+  }
+
+  /** ANX4: each channel's antenna pair, `{ 1: 'AB', 2: 'CD', … }`, for the channels that answered. */
+  async readAntennas() {
+    const got = await this.getKeys(Array.from({ length: this.channels }, (_, i) => KEY.antennaSelection(i + 1)));
+    const out = {};
+    for (let c = 1; c <= this.channels; c += 1) {
+      const v = got.get(KEY.antennaSelection(c));
+      if (v && v.length === 1) out[c] = ANTENNA_SELECTIONS[v[0]] ?? `#${v[0]}`;
+    }
+    return out;
+  }
+
+  /** ANX4: switch a channel to antennas AB or CD. Returns the pair the unit now holds. */
+  async setAntenna(channel, pair) {
+    const raw = ANTENNA_SELECTIONS.indexOf(pair);
+    if (raw < 0) throw new RangeError(`antenna must be one of ${ANTENNA_SELECTIONS.join(', ')}`);
+    chanAddr(channel, CH.NAME); // the channel range check
+    const held = await this.setKey(KEY.antennaSelection(channel), Buffer.from([raw]));
+    return held && held.length === 1 ? (ANTENNA_SELECTIONS[held[0]] ?? `#${held[0]}`) : null;
+  }
+
+  /**
+   * How many channels the unit has: the licence it reports (an ANX4's `LICENSE:RF_CHANNEL_COUNT`),
+   * else counted by asking each channel for its name until one is refused (an ANX4 answers its
+   * licensed channels and GET_FAILs the rest). At least one is assumed.
    */
   async countChannels() {
+    const licence = (await this.getKeys([KEY.LICENSED_CHANNELS], { timeoutMs: 1000 })).get(KEY.LICENSED_CHANNELS);
+    if (licence && licence.length === 2) {
+      const n = licence.readUInt16BE(0);
+      if (n >= 1 && n <= MAX_CHANNELS) return n;
+    }
     const got = await this.getMany(Array.from({ length: MAX_CHANNELS }, (_, i) => chanAddr(i + 1, CH.NAME)));
     let n = 0;
     while (n < MAX_CHANNELS && got.has(chanAddr(n + 1, CH.NAME))) n += 1;
@@ -414,6 +487,9 @@ export class Ad4qDevice extends EventEmitter {
       if (!decoded || (decoded.value == null && !decoded.nullable)) continue;
       if (decoded.channel == null) state.device[decoded.key] = decoded.value;
       else (state.channels[decoded.channel] ??= {})[decoded.key] = decoded.value;
+    }
+    if (this.licensed) {
+      for (const [c, pair] of Object.entries(await this.readAntennas())) (state.channels[c] ??= {}).antenna = pair;
     }
     return state;
   }

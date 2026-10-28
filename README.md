@@ -196,6 +196,13 @@ the same device settings. The differences this plugin handles:
   shows the channels' bands, and the band is not changed from here.
 - **Four named antennas** (A–D) are shown with the unit's settings. There is no
   Quadversity flag and no antenna-bias flag at the AD4Q's addresses.
+- **Antenna pair per channel.** Each channel listens on antennas A/B or C/D;
+  it is shown and set on the card (`x.shure-ad4q.antenna`). The unit keeps it as
+  a string-keyed property (`RF_ANTENNA:ANTENNA_SELECTION_MODE/CH=n`, 00 AB, 01
+  CD), written the way Workbench writes it; the command-strings port refuses it.
+- **The licence is read, not guessed.** The unit reports its licensed channel
+  count (`LICENSE:RF_CHANNEL_COUNT`), and discovery offers the product of that
+  size; counting the channels that answer is the fallback.
 - **Sync presets.** What the next IR sync sends to a transmitter — RF power level,
   bodypack pad and offset, handheld offset, the plug-on's phantom power, pad,
   offset and high-pass filter, polarity, mute mode, locks, battery type and

@@ -47,7 +47,8 @@ import {
   toneLevelDb,
   MAX_CHANNELS,
   SYNC_PRESETS,
-  syncOptions,} from './driver/ad4q/properties.js';
+  syncOptions,
+  ANTENNA_SELECTIONS,} from './driver/ad4q/properties.js';
 import { SCAN_LIMITS, defaultSpan, peakOf, planScan, scanDurationMs } from './driver/ad4q/scan.js';
 import { SlpBrowser } from './driver/acn/slp.js';
 import { COMMAND_PORT, CommandClient, STATUS_PROPS, TX_PROPS, decodeShowLink, decodeTransmitter } from './driver/cmdstrings/client.js';
@@ -153,6 +154,8 @@ export const KEYS = Object.freeze({
   band: ns('band'),
   // ANX4: the sync presets, one object per channel with a label per row
   sync: ns('sync'),
+  // ANX4: the antenna pair each channel listens on
+  antenna: ns('antenna'),
 });
 const SYNC_IDS = Object.keys(SYNC_PRESETS);
 
@@ -408,6 +411,8 @@ export const propertyDescriptors = ({ model, quickToggles = true } = {}) => {
     // the IR preset's RF power: what a transmitter takes on at its next IR sync
     // the AD4Q/AD4D IR-preset RF power; the ANX4 keeps it among its sync presets instead
     ...(isAnx4(model) ? [] : [channel('transmitterPower', { type: 'enum', options: [...RF_POWER_MODES] }, KEYS.rfPower)]),
+    // ANX4: which antenna pair the channel listens on
+    ...(isAnx4(model) ? [channel('antenna', { type: 'enum', options: [...ANTENNA_SELECTIONS] }, KEYS.antenna)] : []),
     // ANX4 sync presets: what the next IR sync sends to the transmitter
     ...(isAnx4(model) ? SYNC_IDS.map((id) => ({ id, scope: 'channel', access: 'readWrite', stateBinding: { key: KEYS.sync, path: [id] }, value: { type: 'enum', options: syncOptions(id) } })) : []),
     // each routing of the talk switch is its own switch; true means that output is on
@@ -892,6 +897,7 @@ class Ad4qMonitoringAdapter {
     emit(KEYS.showLink, this.#channelMap((c) => (c.showLinkDetail ? { linked: c.showLinkDetail.linked, quality: c.showLinkDetail.quality, percent: c.showLinkDetail.quality == null ? 0 : c.showLinkDetail.quality * 20, activeSlots: c.showLinkDetail.activeSlots, registered: c.showLinkDetail.registered } : undefined)));
     emit(KEYS.status, this.#channelMap((c) => c.status));
     emit(KEYS.band, this.#channelMap((c) => c.band));
+    emit(KEYS.antenna, this.#channelMap((c) => c.antenna));
     emit(KEYS.sync, this.#channelMap((c) => { const out = {}; for (const id of SYNC_IDS) if (c[id] != null) out[id] = c[id]; return Object.keys(out).length ? out : undefined; }));
     // the host's receiver tile reads these standard keys: the transmitter's power (255 = none, which
     // also hides the battery), the unit's mode/band/encryption, and interference on the RF meters
@@ -1075,6 +1081,12 @@ class Ad4qMonitoringAdapter {
         target = ['channel', propertyId, label];
         break;
       }
+      case 'antenna': {
+        const pair = oneOf(value, ANTENNA_SELECTIONS);
+        if (!pair) throw badValue(propertyId, `one of ${ANTENNA_SELECTIONS.join(', ')}`);
+        target = ['antenna', 'antenna', pair];
+        break;
+      }
       case 'transmitterPower': {
         const mode = oneOf(value, RF_POWER_MODES);
         if (!mode) throw badValue(propertyId, `one of ${RF_POWER_MODES.join(', ')}`);
@@ -1132,6 +1144,7 @@ class Ad4qMonitoringAdapter {
       }
       else if (scope === 'talk') held = await unit.setTalkOutput(channelIndex, key, encoded);
       else if (scope === 'encryption') held = await unit.setChannel(1, 'encryption', key);
+      else if (scope === 'antenna') held = await unit.setAntenna(channelIndex, encoded);
       else {
         // unlink: the slot is cleared on the unit, and what it reported last is no longer true
         await unit.unlinkSlot(channelIndex, encoded);
@@ -1156,7 +1169,7 @@ class Ad4qMonitoringAdapter {
       return;
     }
     if (scope === 'talk') ((this.state.channels[channelIndex] ??= {}).talk ??= {})[key] = held;
-    else if (scope === 'channel') (this.state.channels[channelIndex] ??= {})[key] = held;
+    else if (scope === 'channel' || scope === 'antenna') (this.state.channels[channelIndex] ??= {})[key] = held;
     else this.state.device[key] = held;
     this.#emitAll();
   }

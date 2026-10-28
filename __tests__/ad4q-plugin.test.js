@@ -143,6 +143,7 @@ test('the ANX4 is a product per licensed channel count, 1 to 24, on the AD4Q til
     const base = byId[PRODUCT].layout.channel.filter((n) => !(n.type === 'control' && n.propertyId === 'transmitterPower'));
     assert.deepEqual(p.layout.channel.slice(0, base.length), base, 'the AD4Q card without its IR-preset control');
     assert.deepEqual(p.layout.channel[base.length], { type: 'value', bind: 'x.shure-ad4q.band', label: 'Band', format: 'text' });
+    assert.deepEqual(p.layout.channel.slice(base.length + 1, base.length + 3).map((n) => n.bind ?? n.propertyId), ['x.shure-ad4q.antenna', 'antenna']);
     const sync = p.layout.channel.at(-1);
     assert.equal(sync.label, 'Sync presets');
     assert.equal(sync.children.length, 13);

@@ -290,6 +290,13 @@ test('an ANX4 is read for the channels it is licensed for, counted from the unit
   await device.setChannel(1, 'syncRfPower', 'No change');
   assert.equal((await device.readAll()).channels[1].syncRfPower, 'No change');
   await assert.rejects(device.setChannel(1, 'syncRfPower', 'Loud'), RangeError);
+  // the licence and the antenna pair are string-keyed, as Workbench reads and writes them
+  assert.equal(await device.countChannels(), 16, 'the licence the unit reports');
+  assert.equal(all.channels[1].antenna, 'AB');
+  assert.equal(await device.setAntenna(1, 'CD'), 'CD');
+  assert.deepEqual(Object.values(await device.readAntennas()).slice(0, 2), ['CD', 'AB']);
+  assert.equal(await device.setAntenna(1, 'AB'), 'AB');
+  await assert.rejects(device.setAntenna(1, 'EF'), RangeError);
 });
 
 test('a unit nothing advertises is reported by address, not left to time out silently', async () => {

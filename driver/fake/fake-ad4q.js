@@ -41,7 +41,8 @@ import {
   encodeString,
   rosterAddrs,
   rosterIdAddr,
-  SYNC_PRESETS,} from '../ad4q/properties.js';
+  SYNC_PRESETS,
+  KEY,} from '../ad4q/properties.js';
 
 const u8 = (n) => Buffer.from([n & 0xff]);
 const u16 = (n) => {
@@ -108,6 +109,12 @@ export class FakeAd4q {
     /** every scan the unit has run, `{ channel, antenna, startKhz, stopKhz }`, for tests */
     this.scans = [];
     this.channels = channels ?? (this.anx4 ? 16 : channelsFor(model));
+    /** an ANX4's string-keyed values: the licence and each channel's antenna pair (all AB) */
+    this.anxKeys = new Map();
+    if (this.anx4) {
+      this.anxKeys.set(KEY.LICENSED_CHANNELS, u16(this.channels));
+      for (let c = 1; c <= this.channels; c += 1) this.anxKeys.set(KEY.antennaSelection(c), u8(0));
+    }
     this.host = host;
     this.uacn = uacn ?? `${model} (simulated)`;
     this.slpTarget = slpPort;
@@ -474,6 +481,16 @@ export class FakeAd4q {
   #onScanString(ctl, vector, key, value) {
     const state = this.scanState;
     const reply = (v, val = Buffer.alloc(0)) => strBatch(v, [{ key, value: val }]);
+    // the ANX4's own string-keyed settings: the licence and the antenna pair per channel
+    if (this.anx4 && this.anxKeys.has(key)) {
+      if (vector === DMP.GET) return [reply(DMP.GET_REPLY, this.anxKeys.get(key))];
+      if (vector === DMP.SET && /ANTENNA_SELECTION_MODE/.test(key)) {
+        if (value.length !== 1 || value[0] > 1) return [reply(DMP.SET_FAIL, u8(5))];
+        // the unit applies it a moment later, as Workbench sees
+        setTimeout(() => this.anxKeys.set(key, Buffer.from(value)), 100);
+        return [];
+      }
+    }
     if (vector === DMP.SUBSCRIBE) {
       ctl.subscribed.add(key);
       return [];
