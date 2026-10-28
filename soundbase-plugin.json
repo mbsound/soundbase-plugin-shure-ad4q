@@ -1219,27 +1219,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -1678,27 +1673,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -2137,27 +2127,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -2596,27 +2581,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -3055,27 +3035,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -3514,27 +3489,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -3973,27 +3943,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -4432,27 +4397,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -4891,27 +4851,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -5350,27 +5305,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -5809,27 +5759,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -6268,27 +6213,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -6727,27 +6667,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -7186,27 +7121,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -7645,27 +7575,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -8104,27 +8029,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -8563,27 +8483,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -9022,27 +8937,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -9481,27 +9391,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -9940,27 +9845,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -10399,27 +10299,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -10858,27 +10753,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -11317,27 +11207,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }
@@ -11776,27 +11661,22 @@
             "format": "text"
           },
           {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.transmissionMode",
+            "label": "Transmission mode",
+            "format": "text"
+          },
+          {
+            "type": "value",
+            "bind": "x.shure-ad4q.unit.antennas",
+            "label": "Antennas",
+            "format": "text"
+          },
+          {
             "type": "indicator",
             "bind": "connection.connected",
             "label": "Link",
             "tone": "success"
-          },
-          {
-            "type": "group",
-            "label": "HD mode",
-            "direction": "column",
-            "children": [
-              {
-                "type": "control",
-                "propertyId": "highDensityMode",
-                "label": "HD mode"
-              },
-              {
-                "type": "text",
-                "text": "Changing HD mode restarts the receiver (about 30 seconds off the air) and unpairs its transmitters, which must be IR-synced again.",
-                "tone": "warning"
-              }
-            ]
           }
         ]
       }

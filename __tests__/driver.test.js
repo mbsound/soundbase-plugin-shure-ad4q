@@ -275,6 +275,7 @@ test('an ANX4 is read for the channels it is licensed for, counted from the unit
   const all = await device.readAll();
   assert.equal(all.device.model, 'ANX4');
   assert.equal(all.device.band, undefined, 'no unit-wide band');
+  assert.equal(all.device.transmissionMode, 'Axient Digital Standard');
   assert.deepEqual([all.device.antennaA, all.device.antennaD], ['Antenna A', 'Antenna D']);
   assert.equal(Object.keys(all.channels).length, 16);
   assert.equal(all.channels[16].name, 'Ch.16');

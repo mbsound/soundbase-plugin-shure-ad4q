@@ -40,9 +40,18 @@ export function modelOf(fctn) {
 export const KEY = Object.freeze({
   LICENSED_CHANNELS: 'LICENSE:RF_CHANNEL_COUNT', // u16: 0x0010 = 16
   MAX_CHANNELS: 'RF:MAX_NUM_CHANNELS', // byte: 0x10 = 16 in an Axient Digital mode
-  TRANSMISSION_MODE: 'RF:CURRENT_TRANSMISSION_MODE', // byte: 02 read with the unit in AD_STANDARD; the rest unmapped
+  TRANSMISSION_MODE: 'RF:CURRENT_TRANSMISSION_MODE', // byte: TRANSMISSION_MODES index
   antennaSelection: (channel) => `RF_ANTENNA:ANTENNA_SELECTION_MODE/CH=${channel - 1}`, // byte: 00 AB, 01 CD
 });
+/**
+ * The ANX4's transmission modes by the byte `RF:CURRENT_TRANSMISSION_MODE` reads, each switched
+ * in Workbench and read back (2026-10-28). The unit advertises `MCR_ULXD` in the ULX-D modes and
+ * `MCR_AD` in the Axient Digital ones, and restarts on a change; the channel count is the licence
+ * in every mode (24 ULX-D channels need 24 licences).
+ */
+export const TRANSMISSION_MODES = Object.freeze(['ULX-D Standard', 'ULX-D High Density', 'Axient Digital Standard', 'Axient Digital High Density']);
+export const transmissionModeLabel = (v) => (v && v.length === 1 ? (TRANSMISSION_MODES[v[0]] ?? `Mode ${v[0]}`) : null);
+
 /** The ANX4's antenna pair per channel, by the byte the unit stores. */
 export const ANTENNA_SELECTIONS = Object.freeze(['AB', 'CD']);
 

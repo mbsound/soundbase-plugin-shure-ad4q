@@ -113,6 +113,7 @@ export class FakeAd4q {
     this.anxKeys = new Map();
     if (this.anx4) {
       this.anxKeys.set(KEY.LICENSED_CHANNELS, u16(this.channels));
+      this.anxKeys.set(KEY.TRANSMISSION_MODE, u8(2)); // Axient Digital Standard
       for (let c = 1; c <= this.channels; c += 1) this.anxKeys.set(KEY.antennaSelection(c), u8(0));
     }
     this.host = host;

@@ -39,7 +39,8 @@ import {
   syncRaw,
   syncOptions,
   KEY,
-  ANTENNA_SELECTIONS,} from './properties.js';
+  ANTENNA_SELECTIONS,
+  transmissionModeLabel,} from './properties.js';
 import {
   ANTENNAS,
   SCAN_OBJ,
@@ -490,6 +491,8 @@ export class Ad4qDevice extends EventEmitter {
     }
     if (this.licensed) {
       for (const [c, pair] of Object.entries(await this.readAntennas())) (state.channels[c] ??= {}).antenna = pair;
+      const mode = transmissionModeLabel((await this.getKeys([KEY.TRANSMISSION_MODE], { timeoutMs: 1000 })).get(KEY.TRANSMISSION_MODE));
+      if (mode) state.device.transmissionMode = mode;
     }
     return state;
   }

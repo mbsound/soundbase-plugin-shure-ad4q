@@ -204,6 +204,15 @@ the same device settings. The differences this plugin handles:
 - **The licence is read, not guessed.** The unit reports its licensed channel
   count (`LICENSE:RF_CHANNEL_COUNT`), and discovery offers the product of that
   size; counting the channels that answer is the fallback.
+- **Four transmission modes.** ULX-D Standard, ULX-D High Density, Axient
+  Digital Standard and Axient Digital High Density, read from the unit
+  (`RF:CURRENT_TRANSMISSION_MODE`, 00–03) and shown on the unit's card,
+  read-only: a change restarts the frame. The unit advertises `MCR_ULXD` in the
+  ULX-D modes and `MCR_AD` in the Axient Digital ones, and discovery accepts
+  both. Every mode keeps the licensed channel count; the 24-channel ULX-D
+  ceiling needs 24 licences. In the ULX-D modes the channel's band object holds
+  something other than a band name ("AB" was read), and the card shows it as
+  the unit gives it.
 - **Sync presets.** What the next IR sync sends to a transmitter — RF power level,
   bodypack pad and offset, handheld offset, the plug-on's phantom power, pad,
   offset and high-pass filter, polarity, mute mode, locks, battery type and

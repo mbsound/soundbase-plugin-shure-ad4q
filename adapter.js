@@ -48,7 +48,8 @@ import {
   MAX_CHANNELS,
   SYNC_PRESETS,
   syncOptions,
-  ANTENNA_SELECTIONS,} from './driver/ad4q/properties.js';
+  ANTENNA_SELECTIONS,
+  TRANSMISSION_MODES,} from './driver/ad4q/properties.js';
 import { SCAN_LIMITS, defaultSpan, peakOf, planScan, scanDurationMs } from './driver/ad4q/scan.js';
 import { SlpBrowser } from './driver/acn/slp.js';
 import { COMMAND_PORT, CommandClient, STATUS_PROPS, TX_PROPS, decodeShowLink, decodeTransmitter } from './driver/cmdstrings/client.js';
@@ -434,7 +435,8 @@ export const propertyDescriptors = ({ model, quickToggles = true } = {}) => {
     // An ANX4's band is per channel (shown on the channel) and not changed here
     bands ? unitProp('band', { type: 'enum', options: [...bands] }) : unitProp('band', { type: 'string' }, 'readOnly'),
     // writable by decision: the unit restarts itself after the change, which the adapter rides out
-    { ...unitProp('highDensityMode', { type: 'boolean' }), effects: ['deviceRestart'] },
+    // the AD4Q/AD4D's HD flag; an ANX4 has four transmission modes instead, shown read-only (a change restarts it)
+    ...(isAnx4(model) ? [unitProp('transmissionMode', { type: 'enum', options: [...TRANSMISSION_MODES] }, 'readOnly')] : [{ ...unitProp('highDensityMode', { type: 'boolean' }), effects: ['deviceRestart'] }]),
     // the AD4D has no Quadversity; on an AD4Q it is shown, and only the front panel can change it.
     // The ANX4 has neither Quadversity nor the antenna-bias flag at the AD4Q's address
     ...(isAd4d(model) || isAnx4(model) ? [] : [unitProp('quadversity', { type: 'string' }, 'readOnly')]),
@@ -909,7 +911,7 @@ class Ad4qMonitoringAdapter {
     if (unitBand !== undefined || dev.hdMode !== undefined) {
       emit('deviceProperties', {
         rfBand: unitBand ?? null,
-        transmissionMode: dev.hdMode == null ? null : dev.hdMode ? 'HIGH_DENSITY' : 'STANDARD',
+        transmissionMode: dev.transmissionMode ? (/High Density/.test(dev.transmissionMode) ? 'HIGH_DENSITY' : 'STANDARD') : dev.hdMode == null ? null : dev.hdMode ? 'HIGH_DENSITY' : 'STANDARD',
         encryptionMode: this.state.channels[1]?.encryption == null ? null : this.state.channels[1].encryption === 'On' ? 'ON' : 'OFF',
       });
     }
@@ -927,6 +929,7 @@ class Ad4qMonitoringAdapter {
       serial: dev.serial,
       band: unitBand,
       hdMode: dev.hdMode,
+      transmissionMode: dev.transmissionMode,
       antennas: [dev.antennaA, dev.antennaB, dev.antennaC, dev.antennaD].filter(Boolean).join(', ') || undefined,
       quadversity: dev.quadversity == null ? undefined : dev.quadversity ? 'On' : 'Off',
       antennaBias: dev.antennaBias,
