@@ -49,6 +49,9 @@ import {
 
 const REQUEST_TIMEOUT_MS = 3000;
 const BATCH = 8;
+/** how many GETs are in flight at once */
+const GET_CONCURRENCY = 16;
+const SUBSCRIBE_GAP_MS = 10;
 
 const signedByte = (n) => encodeU8(n & 0xff);
 
@@ -83,6 +86,15 @@ const DEVICE_WRITES = Object.freeze({
   band: { addr: DEV.BAND, encode: (v) => encodeString(v) },
   antennaBias: { addr: DEV.ANTENNA_BIAS, encode: (v) => encodeBool(v) },
 });
+
+/** A GET the unit answered with GET_FAIL: it has no value there. Final, unlike a timeout. */
+export class ReadRefused extends Error {
+  constructor(addr, reason) {
+    super(`the unit has no value at 0x${addr.toString(16)} (reason ${reason})`);
+    this.addr = addr;
+    this.reason = reason;
+  }
+}
 
 export class WriteRefused extends Error {
   constructor(addr, reason) {
@@ -270,7 +282,7 @@ export class Ad4qDevice extends EventEmitter {
     clearTimeout(request.timer);
     if (!queue.length) this.pending.delete(addr);
     if (outcome === 'ok') request.resolve(payload);
-    else request.reject(request.kind === 'set' ? new WriteRefused(addr, payload) : new Error(`the unit has no value at 0x${addr.toString(16)} (reason ${payload})`));
+    else request.reject(request.kind === 'set' ? new WriteRefused(addr, payload) : new ReadRefused(addr, payload));
   }
 
   #await(addr, kind) {
@@ -323,27 +335,37 @@ export class Ad4qDevice extends EventEmitter {
     return this.#ask(addr, 'get', dmpPdu(DMP.GET, addr));
   }
 
-  /** Many values at once: a Map of address to value, leaving out any the unit did not give. */
-  async getMany(addrs) {
+  /**
+   * Many values at once: a Map of address to value, leaving out any the unit did not give.
+   * Each address is asked on its own PDU, a bounded number in flight: an ANX4 answers a
+   * batched GET's refusals without naming the address when the refused one is not first,
+   * so a batch with an absent object in it loses that answer and the caller waits out a
+   * timeout. Asked alone, a refusal comes back at once. A timeout is retried once; a
+   * refusal is final.
+   */
+  async getMany(addrs, { concurrency = GET_CONCURRENCY, retries = 1 } = {}) {
     const results = new Map();
-    const waits = addrs.map((addr) => {
-      const answer = this.#await(addr, 'get');
-      answer.promise.then(
-        (value) => results.set(addr, value),
-        () => {}
-      );
-      return answer;
-    });
-    try {
-      for (let i = 0; i < addrs.length; i += BATCH) {
-        await this.session.send(dmpBatch(DMP.GET, addrs.slice(i, i + BATCH)));
-      }
-    } catch (err) {
-      for (const wait of waits) wait.cancel();
-      this.#missed();
-      throw err;
+    const refused = new Set();
+    const round = async (list) => {
+      let next = 0;
+      const worker = async () => {
+        while (next < list.length && !this.closed) {
+          const addr = list[next++];
+          try {
+            results.set(addr, await this.get(addr));
+          } catch (err) {
+            if (err instanceof ReadRefused) refused.add(addr);
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, worker));
+    };
+    await round(addrs);
+    for (let r = 0; r < retries; r += 1) {
+      const again = addrs.filter((a) => !results.has(a) && !refused.has(a));
+      if (!again.length || this.closed) break;
+      await round(again);
     }
-    await Promise.all(waits.map((w) => w.promise.catch(() => {})));
     return results;
   }
 
@@ -351,6 +373,8 @@ export class Ad4qDevice extends EventEmitter {
   async subscribe(addrs) {
     for (let i = 0; i < addrs.length; i += BATCH) {
       await this.session.send(dmpBatch(DMP.SUBSCRIBE, addrs.slice(i, i + BATCH)));
+      // a breath between batches: a 16-channel unit is sent several hundred of these
+      if (i + BATCH < addrs.length) await new Promise((resolve) => setTimeout(resolve, SUBSCRIBE_GAP_MS));
     }
   }
 
