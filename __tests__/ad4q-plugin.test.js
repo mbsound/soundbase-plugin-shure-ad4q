@@ -153,6 +153,15 @@ test('the ANX4 is a product per licensed channel count, 1 to 24, on the AD4Q til
   assert.equal(manifest.products.length, 26);
 });
 
+test('a setting the model does not offer is refused before it reaches the unit', () => {
+  const host = { config: { host: '192.0.2.10' } };
+  const anx4 = createMonitoringAdapter({ id: 'net:192.0.2.10', product: PRODUCT_ANX4(16), ...host }, {});
+  const ad4q = createMonitoringAdapter({ id: 'net:192.0.2.10', product: PRODUCT, ...host }, {});
+  assert.equal(anx4.channels, 16);
+  assert.equal(anx4.anx4, true);
+  assert.equal(ad4q.anx4, false);
+});
+
 test('the adapter sizes itself to the product it is given', () => {
   const host = { config: { host: '192.0.2.10' } };
   assert.equal(createMonitoringAdapter({ id: 'net:192.0.2.10', product: PRODUCT_AD4D, ...host }, {}).channels, 2);

@@ -8,7 +8,7 @@ import { Ad4qDevice, ScanAborted, ScanFailed, WriteRefused } from '../driver/ad4
 import { SlpBrowser } from '../driver/acn/slp.js';
 import { AcnSession } from '../driver/acn/session.js';
 import { FakeAd4q } from '../driver/fake/fake-ad4q.js';
-import { CH, chanAddr, channelsFor, decodeUint, isReceiverAdvert, modelOf, isLicensedModel } from '../driver/ad4q/properties.js';
+import { CH, chanAddr, channelsFor, decodeUint, encodeString, isReceiverAdvert, modelOf, isLicensedModel } from '../driver/ad4q/properties.js';
 import { DMP, strBatch } from '../driver/acn/pdu.js';
 import { SCAN_OBJ, configEntries, planScan } from '../driver/ad4q/scan.js';
 
@@ -298,6 +298,16 @@ test('an ANX4 is read for the channels it is licensed for, counted from the unit
   assert.deepEqual(Object.values(await device.readAntennas()).slice(0, 2), ['CD', 'AB']);
   assert.equal(await device.setAntenna(1, 'AB'), 'AB');
   await assert.rejects(device.setAntenna(1, 'EF'), RangeError);
+  await assert.rejects(device.setAntenna(17, 'AB'), /channel must be 1\.\.16/, 'a channel the unit lacks is refused up front');
+  // a key the unit refuses ends the wait at once instead of running out the timeout
+  const t0 = Date.now();
+  const missing = await device.getKeys(['NO:SUCH_KEY', 'LICENSE:RF_CHANNEL_COUNT'], { timeoutMs: 3000 });
+  assert.equal(missing.get('LICENSE:RF_CHANNEL_COUNT').readUInt16BE(0), 16);
+  assert.equal(missing.has('NO:SUCH_KEY'), false);
+  assert.ok(Date.now() - t0 < 1500, `a refused key answered in ${Date.now() - t0} ms, not the timeout`);
+  // a ULX-D mode leaves no band name on the channel: the band reads as nothing, not as "AB"
+  fake.setLocal(chanAddr(1, CH.BAND), encodeString('AB'));
+  assert.equal((await device.readAll()).channels[1].band, null);
 });
 
 test('a unit nothing advertises is reported by address, not left to time out silently', async () => {

@@ -159,6 +159,9 @@ export const KEYS = Object.freeze({
   antenna: ns('antenna'),
 });
 const SYNC_IDS = Object.keys(SYNC_PRESETS);
+/** Properties only an ANX4 has, and the AD4Q/AD4D ones an ANX4 lacks (its HD flag and antenna bias live elsewhere, it has no Quadversity, and its IR RF power is a sync preset). */
+const ANX4_ONLY = new Set(['antenna', 'transmissionMode', ...SYNC_IDS]);
+const ANX4_LACKS = new Set(['highDensityMode', 'quadversity', 'antennaBias', 'transmitterPower']);
 
 const SLOT_OPTIONS = ['None', ...Array.from({ length: ROSTER_SLOTS }, (_, i) => `Slot ${i + 1}`)];
 // `xlrNormal` -> `talkNormalXlr`: position first, then output, as the Workbench grid reads
@@ -258,7 +261,10 @@ function ensureBrowser(pluginConfig) {
   if (!browser) {
     browser = new SlpBrowser({ targets, filter: isAd4q, log });
     browser.on('found', (u) => log('info', `found ${u.fctn} "${u.uacn}" at ${u.ip}:${u.port} (${u.cidText})`));
-    browser.on('lost', (u) => log('info', `lost ${u.fctn} "${u.uacn}" at ${u.ip}`));
+    browser.on('lost', (u) => {
+      log('info', `lost ${u.fctn} "${u.uacn}" at ${u.ip}`);
+      anx4Probes.delete(u.ip);
+    });
   } else {
     browser.setTargets(targets);
   }
@@ -270,36 +276,46 @@ const idleCheck = () => {
   if (browser && Date.now() - lastDiscoverAt > BROWSE_IDLE_MS) browser.stop();
 };
 
-const discoveredDevice = (unit, channels = null) => ({
+const discoveredDevice = (unit, probe = null) => ({
   id: `${NET_ID_PREFIX}${unit.ip}`,
-  name: `${modelOf(unit.fctn) === 'ANX4' ? `ANX4 ${unit.uacn || ''}`.trim() : unit.uacn || unit.fctn} (${unit.ip})`,
-  product: productFor(unit.fctn, channels),
+  // an ANX4 advertises its module's fixed string ("MCR AD"), so its own name comes from the probe
+  name: `${probe ? `ANX4 ${probe.name ?? ''}`.trim() : unit.uacn || unit.fctn} (${unit.ip})`,
+  product: productFor(unit.fctn, probe?.channels ?? null),
   transport: { kind: 'network', host: unit.ip, port: unit.port },
   config: { host: unit.ip },
 });
 
 // An ANX4's product is its licensed channel count, which only the unit knows: a short session
-// counts the channels once per unit and the answer is kept; until it is in, the unit is not listed.
-const anx4Channels = new Map(); // ip -> count, or a promise while counting
-async function countAnx4(unit) {
+// counts the channels (and reads the unit's name) once per unit and the answer is kept while the
+// unit stays on the network; until it is in, the unit is not listed. A probe that fails is not
+// repeated for a while, and a unit the browse loses is counted afresh when it is back (its
+// licences may have changed, or it may be another frame at the same address).
+const ANX4_PROBE_RETRY_MS = 60_000;
+const anx4Probes = new Map(); // ip -> { cid, channels, name } | { cid, promise } | { cid, failedAt }
+export const resetAnx4Probes = () => anx4Probes.clear();
+async function probeAnx4(unit) {
   const probe = new Ad4qDevice({ host: unit.ip, cid: unit.cid, port: unit.port, channels: MAX_CHANNELS, log });
   try {
     await probe.connect();
-    return await probe.countChannels();
+    const channels = await probe.countChannels();
+    const name = decodeString(await probe.get(DEV.NAME).catch(() => null)) || null;
+    return { channels, name };
   } finally {
     await probe.close().catch(() => {});
   }
 }
-function anx4ChannelsFor(unit) {
-  const known = anx4Channels.get(unit.ip);
-  if (typeof known === 'number') return known;
-  if (!known) {
-    const p = countAnx4(unit).then(
-      (n) => { anx4Channels.set(unit.ip, n); log('info', `${unit.ip}: ANX4 licensed for ${n} channel${n === 1 ? '' : 's'}`); return n; },
-      (err) => { anx4Channels.delete(unit.ip); log('warn', `${unit.ip}: could not count the ANX4's channels (${err.message}); will retry`); return null; }
-    );
-    anx4Channels.set(unit.ip, p);
+function anx4ProbeFor(unit) {
+  const known = anx4Probes.get(unit.ip);
+  if (known && known.cid === unit.cid) {
+    if (typeof known.channels === 'number') return known;
+    if (known.promise) return null;
+    if (Date.now() - known.failedAt < ANX4_PROBE_RETRY_MS) return null;
   }
+  const promise = probeAnx4(unit).then(
+    ({ channels, name }) => { anx4Probes.set(unit.ip, { cid: unit.cid, channels, name }); log('info', `${unit.ip}: ANX4 licensed for ${channels} channel${channels === 1 ? '' : 's'}`); },
+    (err) => { anx4Probes.set(unit.ip, { cid: unit.cid, failedAt: Date.now() }); log('warn', `${unit.ip}: could not count the ANX4's channels (${err.message}); retrying in ${ANX4_PROBE_RETRY_MS / 1000} s`); }
+  );
+  anx4Probes.set(unit.ip, { cid: unit.cid, promise });
   return null;
 }
 
@@ -325,8 +341,8 @@ export async function discoverDevices(pluginConfig = {}) {
   setTimeout(idleCheck, BROWSE_IDLE_MS + 1000).unref?.();
   for (const unit of b.devices()) {
     if (modelOf(unit.fctn) === 'ANX4') {
-      const n = anx4ChannelsFor(unit);
-      if (n !== null) found.push(discoveredDevice(unit, n));
+      const probe = anx4ProbeFor(unit);
+      if (probe) found.push(discoveredDevice(unit, probe));
     } else found.push(discoveredDevice(unit));
   }
   return found;
@@ -466,6 +482,8 @@ class Ad4qMonitoringAdapter {
     this.device = device;
     this.pluginConfig = pluginConfig;
     this.channels = channelsOfProduct(device?.product);
+    /** an ANX4 product: the unit has the per-channel band, antenna pair and sync presets, and lacks the AD4Q-only settings */
+    this.anx4 = ANX4_PRODUCT_RE.test(String(device?.product ?? ''));
     this.quickToggles = quickTogglesWanted(pluginConfig);
     this.settings = deviceSettings(device?.id);
     // the command-strings side: the transmitter being received, the slots and ShowLink, the status flags
@@ -516,7 +534,7 @@ class Ad4qMonitoringAdapter {
 
   /** A session to the unit, wired to this adapter; the caller connects it. */
   async #newUnit() {
-    let options = { host: this.host, channels: this.channels, licensed: ANX4_PRODUCT_RE.test(String(this.device?.product ?? '')), log: (l, m) => this.log(l, m) };
+    let options = { host: this.host, channels: this.channels, licensed: this.anx4, log: (l, m) => this.log(l, m) };
     if (this.simulated) {
       const fake = await ensureSimulator();
       options = {
@@ -898,9 +916,12 @@ class Ad4qMonitoringAdapter {
     );
     emit(KEYS.showLink, this.#channelMap((c) => (c.showLinkDetail ? { linked: c.showLinkDetail.linked, quality: c.showLinkDetail.quality, percent: c.showLinkDetail.quality == null ? 0 : c.showLinkDetail.quality * 20, activeSlots: c.showLinkDetail.activeSlots, registered: c.showLinkDetail.registered } : undefined)));
     emit(KEYS.status, this.#channelMap((c) => c.status));
-    emit(KEYS.band, this.#channelMap((c) => c.band));
-    emit(KEYS.antenna, this.#channelMap((c) => c.antenna));
-    emit(KEYS.sync, this.#channelMap((c) => { const out = {}; for (const id of SYNC_IDS) if (c[id] != null) out[id] = c[id]; return Object.keys(out).length ? out : undefined; }));
+    if (this.anx4) {
+      // channel maps merge on the host, so a value that is gone is published as null, not left out
+      emit(KEYS.band, this.#channelMap((c) => c.band ?? null));
+      emit(KEYS.antenna, this.#channelMap((c) => c.antenna ?? null));
+      emit(KEYS.sync, this.#channelMap((c) => Object.fromEntries(SYNC_IDS.map((id) => [id, c[id] ?? null]))));
+    }
     // the host's receiver tile reads these standard keys: the transmitter's power (255 = none, which
     // also hides the battery), the unit's mode/band/encryption, and interference on the RF meters
     emit('transmitterInfo', this.#channelMap((c) => (c.tx === undefined ? undefined : { powerLevel: isNum(c.tx.powerMw) ? c.tx.powerMw : 255 })));
@@ -990,6 +1011,9 @@ class Ad4qMonitoringAdapter {
     if (channelScoped.has(propertyId) && (!Number.isInteger(channelIndex) || channelIndex < 1 || channelIndex > this.channels)) {
       throw new HttpError(400, 'unknown_channel', `${propertyId} is per channel; channelIndex must be 1..${this.channels}`);
     }
+    // a setting this model does not offer is not written to it, whatever a stale project asks for
+    const notOffered = this.anx4 ? ANX4_LACKS : ANX4_ONLY;
+    if (notOffered.has(propertyId)) throw new HttpError(400, 'unknown_property', `No property ${propertyId} on ${this.device?.product ?? PRODUCT}`);
 
     // Each case settles on a `[scope, key, encoded value]` for the driver.
     let target;
@@ -1239,7 +1263,10 @@ class Ad4qSpectrumAdapter {
 
   async open() {
     if (this.hostError) throw this.hostError;
-    let options = { host: this.host, channels: this.channels, licensed: ANX4_PRODUCT_RE.test(String(this.device?.product ?? '')), log: (l, m) => this.log(l, m) };
+    const anx4 = ANX4_PRODUCT_RE.test(String(this.device?.product ?? ''));
+    // the ANX4 has no per-channel scan trigger (its four antennas are shared) and its scan is not captured yet
+    if (anx4) throw new Error('the ANX4\'s RF scan is not supported by this plugin yet');
+    let options = { host: this.host, channels: this.channels, licensed: anx4, log: (l, m) => this.log(l, m) };
     if (this.simulated) {
       const fake = await ensureSimulator();
       options = {
@@ -1482,8 +1509,6 @@ class Ad4qSpectrumAdapter {
   }
 
   async #scan({ onTrace, plan, channel, antennas, signal }) {
-    // the ANX4 has no per-channel scan trigger (its four antennas are shared); its scan is not captured yet
-    if (isAnx4(this.state?.device?.model)) throw new Error('the ANX4\'s RF scan is not supported by this plugin yet');
     const curves = [];
     let lastReported = -1;
     try {

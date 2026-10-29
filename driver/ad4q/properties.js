@@ -52,6 +52,9 @@ export const KEY = Object.freeze({
 export const TRANSMISSION_MODES = Object.freeze(['ULX-D Standard', 'ULX-D High Density', 'Axient Digital Standard', 'Axient Digital High Density']);
 export const transmissionModeLabel = (v) => (v && v.length === 1 ? (TRANSMISSION_MODES[v[0]] ?? `Mode ${v[0]}`) : null);
 
+/** A band name as Shure writes them (G57, G57+, K54, H54 …); the ANX4's band object reads something else ("AB") in a ULX-D mode. */
+export const isBandName = (s) => /^[A-Z]\d{2}\+?$/i.test(String(s ?? '').trim());
+
 /** The ANX4's antenna pair per channel, by the byte the unit stores. */
 export const ANTENNA_SELECTIONS = Object.freeze(['AB', 'CD']);
 
@@ -356,7 +359,7 @@ export function syncRaw(key, label) {
 export const CHANNEL_PROPS = Object.freeze([
   { key: 'name', obj: CH.NAME, decode: decodeString },
   // ANX4 only (`anx4: true`): an AD4Q/AD4D refuses these, so they are not asked of one
-  { key: 'band', obj: CH.BAND, decode: decodeString, anx4: true },
+  { key: 'band', obj: CH.BAND, decode: (v) => { const s = decodeString(v); return isBandName(s) ? s : null; }, nullable: true, anx4: true },
   ...Object.entries(SYNC_PRESETS).map(([key, p]) => ({ key, obj: p.obj, decode: (v) => syncLabel(key, v), anx4: true })),
   { key: 'gainDb', obj: CH.GAIN_DB, decode: (v) => (v.length === 1 ? decodeInt(v) : null) },
   { key: 'muted', obj: CH.MUTE, decode: decodeBool },

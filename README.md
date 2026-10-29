@@ -197,22 +197,20 @@ the same device settings. The differences this plugin handles:
 - **Four named antennas** (A–D) are shown with the unit's settings. There is no
   Quadversity flag and no antenna-bias flag at the AD4Q's addresses.
 - **Antenna pair per channel.** Each channel listens on antennas A/B or C/D;
-  it is shown and set on the card (`x.shure-ad4q.antenna`). The unit keeps it as
-  a string-keyed property (`RF_ANTENNA:ANTENNA_SELECTION_MODE/CH=n`, 00 AB, 01
-  CD), written the way Workbench writes it (confirmed on the bench ANX4: channel
-  1 CD to AB, read back); the command-strings port refuses it.
+  it is shown and set on the card (`x.shure-ad4q.antenna`), written the way
+  Workbench writes it (confirmed on the bench ANX4: channel 1 CD to AB, read
+  back); the command-strings port refuses it.
 - **The licence is read, not guessed.** The unit reports its licensed channel
-  count (`LICENSE:RF_CHANNEL_COUNT`), and discovery offers the product of that
-  size; counting the channels that answer is the fallback.
+  count, and discovery offers the product of that size; counting the channels
+  that answer is the fallback. The count is re-read whenever the unit
+  reappears on the network, so licences added or moved are picked up.
 - **Four transmission modes.** ULX-D Standard, ULX-D High Density, Axient
-  Digital Standard and Axient Digital High Density, read from the unit
-  (`RF:CURRENT_TRANSMISSION_MODE`, 00–03) and shown on the unit's card,
-  read-only: a change restarts the frame. The unit advertises `MCR_ULXD` in the
+  Digital Standard and Axient Digital High Density, read from the unit and
+  shown on the unit's card, read-only: a change restarts the frame. The unit advertises `MCR_ULXD` in the
   ULX-D modes and `MCR_AD` in the Axient Digital ones, and discovery accepts
   both. Every mode keeps the licensed channel count; the 24-channel ULX-D
-  ceiling needs 24 licences. In the ULX-D modes the channel's band object holds
-  something other than a band name ("AB" was read), and the card shows it as
-  the unit gives it.
+  ceiling needs 24 licences. In the ULX-D modes the unit reports no band name for
+  a channel, and the card's Band cell is empty.
 - **Sync presets.** What the next IR sync sends to a transmitter — RF power level,
   bodypack pad and offset, handheld offset, the plug-on's phantom power, pad,
   offset and high-pass filter, polarity, mute mode, locks, battery type and
@@ -224,8 +222,9 @@ the same device settings. The differences this plugin handles:
 - **No RF scan yet.** The ANX4 has no per-channel scan trigger (the antennas are
   shared), and its scan has not been captured from Workbench; the ANX4 products
   do not declare the spectrum analyzer.
-- Command strings (TCP 2202) are off until enabled on the unit, and the ANX4
-  firmware seen (1.0.16.0) had no such option; transmitter details then come
+- Command strings (TCP 2202) are off until enabled on the unit, under Device
+  Configuration > Network Services; the option arrived with a later firmware
+  (1.0.16.0 lacked it, 1.2.18.0 has it). Without it, transmitter details come
   from the ACN bank alone.
 
 Status: read on a real ANX4 licensed for 16 channels (2026-10-28, firmware

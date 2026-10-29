@@ -229,10 +229,14 @@ export class Ad4qDevice extends EventEmitter {
     const wanted = new Set(keys);
     let done;
     const finished = new Promise((resolve) => { done = resolve; });
+    const answered = new Set();
     const onString = ({ vector, key, value }) => {
-      if (!wanted.has(key) || vector !== DMP.GET_REPLY) return;
-      results.set(key, value);
-      if (results.size === wanted.size) done();
+      if (!wanted.has(key)) return;
+      // a refusal is an answer too: the unit has no such key (in this mode), so there is nothing to wait for
+      if (vector === DMP.GET_REPLY) results.set(key, value);
+      else if (vector !== DMP.GET_FAIL) return;
+      answered.add(key);
+      if (answered.size === wanted.size) done();
     };
     this.on('string', onString);
     const timer = setTimeout(() => done(), timeoutMs);
@@ -280,6 +284,7 @@ export class Ad4qDevice extends EventEmitter {
     const raw = ANTENNA_SELECTIONS.indexOf(pair);
     if (raw < 0) throw new RangeError(`antenna must be one of ${ANTENNA_SELECTIONS.join(', ')}`);
     chanAddr(channel, CH.NAME); // the channel range check
+    if (channel > this.channels) throw new RangeError(`channel must be 1..${this.channels} (got ${channel})`);
     const held = await this.setKey(KEY.antennaSelection(channel), Buffer.from([raw]));
     return held && held.length === 1 ? (ANTENNA_SELECTIONS[held[0]] ?? `#${held[0]}`) : null;
   }
@@ -498,9 +503,13 @@ export class Ad4qDevice extends EventEmitter {
       else (state.channels[decoded.channel] ??= {})[decoded.key] = decoded.value;
     }
     if (this.licensed) {
-      for (const [c, pair] of Object.entries(await this.readAntennas())) (state.channels[c] ??= {}).antenna = pair;
-      const mode = transmissionModeLabel((await this.getKeys([KEY.TRANSMISSION_MODE], { timeoutMs: 1000 })).get(KEY.TRANSMISSION_MODE));
-      if (mode) state.device.transmissionMode = mode;
+      // the antenna pairs and the transmission mode in one string-keyed read; "nothing" is an explicit null
+      const got = await this.getKeys([KEY.TRANSMISSION_MODE, ...Array.from({ length: this.channels }, (_, i) => KEY.antennaSelection(i + 1))]);
+      for (let c = 1; c <= this.channels; c += 1) {
+        const v = got.get(KEY.antennaSelection(c));
+        (state.channels[c] ??= {}).antenna = v && v.length === 1 ? (ANTENNA_SELECTIONS[v[0]] ?? `#${v[0]}`) : null;
+      }
+      state.device.transmissionMode = transmissionModeLabel(got.get(KEY.TRANSMISSION_MODE));
     }
     return state;
   }
