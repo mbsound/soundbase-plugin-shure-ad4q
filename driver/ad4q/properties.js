@@ -52,8 +52,12 @@ export const KEY = Object.freeze({
 export const TRANSMISSION_MODES = Object.freeze(['ULX-D Standard', 'ULX-D High Density', 'Axient Digital Standard', 'Axient Digital High Density']);
 export const transmissionModeLabel = (v) => (v && v.length === 1 ? (TRANSMISSION_MODES[v[0]] ?? `Mode ${v[0]}`) : null);
 
-/** A band name as Shure writes them (G57, G57+, K54, H54 …); the ANX4's band object reads something else ("AB") in a ULX-D mode. */
-export const isBandName = (s) => /^[A-Z]\d{2}\+?$/i.test(String(s ?? '').trim());
+/**
+ * Whether the ANX4's channel band object holds a band. In a ULX-D mode it was read holding the
+ * antenna-pair string ("AB", 2026-10-28) instead; only that observed case is filtered, so no
+ * band name of a shape not seen yet is hidden.
+ */
+export const isBandName = (s) => { const t = String(s ?? '').trim(); return t.length > 0 && !ANTENNA_SELECTIONS.includes(t.toUpperCase()); };
 
 /** The ANX4's antenna pair per channel, by the byte the unit stores. */
 export const ANTENNA_SELECTIONS = Object.freeze(['AB', 'CD']);
