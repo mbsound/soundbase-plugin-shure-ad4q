@@ -32,7 +32,8 @@ export function parseReport(frame) {
  * METER_RATE. Only the channel quality (0..5, 255 unknown) is kept; levels come from the ACN session.
  */
 export function parseSample(frame) {
-  const m = /^<\s*SAMPLE\s+(\d)\s+ALL\s+(\d{3})\s+\d{3}\s+\d{3}\s+\d{3}\s+([XRB]{2,4})\b/.exec(frame);
+  // the channel is one or two digits: an ANX4 meters channels 10-24 too
+  const m = /^<\s*SAMPLE\s+(\d{1,2})\s+ALL\s+(\d{3})\s+\d{3}\s+\d{3}\s+\d{3}\s+([XRB]{2,4})\b/.exec(frame);
   if (!m) return null;
   const qual = Number(m[2]);
   return {

@@ -88,6 +88,10 @@ test('a SAMPLE line carries the channel quality, and metering is switched on and
   assert.deepEqual(parseReport('< SAMPLE 1 ALL 005 031 102 102 BB 31 086 31 065 >'), { channel: 1, prop: 'SAMPLE', args: [], sample: { quality: 5, antennas: [true, true] } });
   assert.deepEqual(parseReport('< SAMPLE 1 ALL 005 031 102 102 XR 31 086 31 065 >').sample.antennas, [null, false]);
   assert.equal(parseReport('< SAMPLE 2 ALL 255 000 000 000 XX 00 000 00 000 >').sample.quality, null);
+  // an ANX4's channels 10-24: two-digit channel numbers in SAMPLE lines and reports alike
+  assert.deepEqual(parseReport('< SAMPLE 12 ALL 004 031 102 102 RB 31 086 31 065 >'), { channel: 12, prop: 'SAMPLE', args: [], sample: { quality: 4, antennas: [false, true] } });
+  assert.equal(parseReport('< SAMPLE 24 ALL 003 000 000 000 BB 00 000 00 000 >').channel, 24);
+  assert.deepEqual(parseReport('< REP 16 CHAN_QUALITY 3 >'), { channel: 16, prop: 'CHAN_QUALITY', args: ['3'] });
   fake.quality[1] = 4;
   const samples = [];
   client.on('rep', (r) => r.prop === 'SAMPLE' && samples.push(r));
