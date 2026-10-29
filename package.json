@@ -8,11 +8,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mbsound/soundbase-plugin-shure-ad4q.git"
+    "url": "git+https://github.com/mbsound/soundbase-plugin-shure-axient-digital.git"
   },
-  "homepage": "https://github.com/mbsound/soundbase-plugin-shure-ad4q#readme",
+  "homepage": "https://github.com/mbsound/soundbase-plugin-shure-axient-digital#readme",
   "bugs": {
-    "url": "https://github.com/mbsound/soundbase-plugin-shure-ad4q/issues"
+    "url": "https://github.com/mbsound/soundbase-plugin-shure-axient-digital/issues"
   },
   "license": "MIT",
   "type": "module",
